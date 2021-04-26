@@ -268,9 +268,3 @@
 	icon_state = "fuel_stationary"
 	desc = "A stationary, plumbed, fuel tank."
 	reagent_id = /datum/reagent/fuel
-
-/obj/structure/reagent_dispensers/dieseltank/
-	name = "diesel tank"
-	desc = "An old tank of disel fuel, rarely used due to advances in technology, but kept around for emergencies. Keep away from open flames."
-	icon_state = "diesel"
-	reagent_id = /datum/reagent/diesel
