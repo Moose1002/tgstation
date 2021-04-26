@@ -1140,7 +1140,7 @@
 	..()
 	return TRUE
 
-/datum/reagent/diesel //Sole purpose is to fuel Diesel Generators
+/datum/reagent/diesel
 	name = "Diesel fuel"
 	description = "Used to fuel old diesel generators. Flammable."
 	color = "#e4af00" // rgb: 228, 175, 0
