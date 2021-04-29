@@ -1140,6 +1140,27 @@
 	..()
 	return TRUE
 
+/datum/reagent/diesel
+	name = "Diesel fuel"
+	description = "Used to fuel old diesel generators. Flammable."
+	color = "#e4af00" // rgb: 228, 175, 0
+	glass_name = "glass of diesel fuel"
+	glass_desc = "Considering this may have come from a dinosaur, should this really be consumed?"
+	penetrates_skin = NONE
+	ph = 7
+	burning_temperature = 1725
+	burning_volume = 0.2
+
+/datum/reagent/diesel/expose_mob(mob/living/exposed_mob, methods=TOUCH, reac_volume)//Splashing people with diesel fuel to makes them easy to ignite, similiary to welding fuel.
+	. = ..()
+	if(methods & (TOUCH|VAPOR))
+		exposed_mob.adjust_fire_stacks(reac_volume / 10)
+
+/datum/reagent/diesel/on_mob_life(mob/living/carbon/M, delta_time, times_fired)
+	M.adjustToxLoss(0.5*delta_time, 0)
+	..()
+	return TRUE
+
 /datum/reagent/space_cleaner
 	name = "Space cleaner"
 	description = "A compound used to clean things. Now with 50% more sodium hypochlorite!"

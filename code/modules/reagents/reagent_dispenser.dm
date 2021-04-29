@@ -112,24 +112,35 @@
 			boom()
 
 /obj/structure/reagent_dispensers/fueltank/attackby(obj/item/I, mob/living/user, params)
+
 	if(I.tool_behaviour == TOOL_WELDER)
-		if(!reagents.has_reagent(/datum/reagent/fuel))
-			to_chat(user, "<span class='warning'>[src] is out of fuel!</span>")
-			return
 		var/obj/item/weldingtool/W = I
-		if(istype(W) && !W.welding)
-			if(W.reagents.has_reagent(/datum/reagent/fuel, W.max_fuel))
-				to_chat(user, "<span class='warning'>Your [W.name] is already full!</span>")
+		if(!reagents.has_reagent(/datum/reagent/diesel))
+			if(!reagents.has_reagent(/datum/reagent/fuel))
+				to_chat(user, "<span class='warning'>[src] is out of fuel!</span>")
 				return
-			reagents.trans_to(W, W.max_fuel, transfered_by = user)
-			user.visible_message("<span class='notice'>[user] refills [user.p_their()] [W.name].</span>", "<span class='notice'>You refill [W].</span>")
-			playsound(src, 'sound/effects/refill.ogg', 50, TRUE)
-			W.update_appearance()
+			if(istype(W) && !W.welding)
+				if(W.reagents.has_reagent(/datum/reagent/fuel, W.max_fuel))
+					to_chat(user, "<span class='warning'>Your [W.name] is already full!</span>")
+					return
+				reagents.trans_to(W, W.max_fuel, transfered_by = user)
+				user.visible_message("<span class='notice'>[user] refills [user.p_their()] [W.name].</span>", "<span class='notice'>You refill [W].</span>")
+				playsound(src, 'sound/effects/refill.ogg', 50, TRUE)
+				W.update_appearance()
+			else
+				user.visible_message("<span class='danger'>[user] catastrophically fails at refilling [user.p_their()] [I.name]!</span>", "<span class='userdanger'>That was stupid of you.</span>")
+				log_bomber(user, "detonated a", src, "via welding tool")
+				boom()
+			return
 		else
-			user.visible_message("<span class='danger'>[user] catastrophically fails at refilling [user.p_their()] [I.name]!</span>", "<span class='userdanger'>That was stupid of you.</span>")
-			log_bomber(user, "detonated a", src, "via welding tool")
-			boom()
-		return
+			if(istype(W) && !W.welding)
+				to_chat(user, "<span class='warning'>[src] doesn't use diesel as fuel!</span>")
+				return
+			else
+				user.visible_message("<span class='danger'>[user] swings [user.p_their()] [I.name] around, accidentally igniting the tank!</span>", "<span class='userdanger'>That was stupid of you.</span>")
+				log_bomber(user, "detonated a", src, "via welding tool")
+				boom()
+			return
 	return ..()
 
 /obj/structure/reagent_dispensers/fueltank/large
@@ -141,6 +152,12 @@
 /obj/structure/reagent_dispensers/fueltank/large/boom()
 	explosion(src, devastation_range = 1, heavy_impact_range = 2, light_impact_range = 7, flame_range = 12)
 	qdel(src)
+
+/obj/structure/reagent_dispensers/fueltank/dieseltank/
+	name = "diesel tank"
+	desc = "An old tank of disel fuel, rarely used due to advances in technology, but kept around for emergencies. Keep away from open flames."
+	icon_state = "diesel"
+	reagent_id = /datum/reagent/diesel
 
 /obj/structure/reagent_dispensers/peppertank
 	name = "pepper spray refiller"
