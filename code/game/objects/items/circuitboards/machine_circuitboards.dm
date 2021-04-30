@@ -356,6 +356,14 @@
 		/obj/item/stack/sheet/glass = 10,
 		/obj/item/stack/sheet/plasteel = 5)
 
+/obj/item/circuitboard/machine/diesel_gen
+	name = "Diesel Generator (Machine Board)"
+	icon_state = "engineering"
+	build_path = /obj/machinery/power/diesel_gen
+	req_components = list(
+		/obj/item/stack/cable_coil = 10,
+		/obj/item/stack/sheet/glass = 10,
+		/obj/item/stack/sheet/plasteel = 5)
 //Generic
 
 /obj/item/circuitboard/machine/circuit_imprinter

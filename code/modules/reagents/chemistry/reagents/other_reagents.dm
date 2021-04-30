@@ -1141,7 +1141,7 @@
 	return TRUE
 
 /datum/reagent/diesel
-	name = "Diesel fuel"
+	name = "Diesel Fuel"
 	description = "Used to fuel old diesel generators. Flammable."
 	color = "#e4af00" // rgb: 228, 175, 0
 	glass_name = "glass of diesel fuel"
