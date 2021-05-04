@@ -39,3 +39,31 @@
 	if(!anchored)
 		return FALSE
 	. = ..()
+
+/obj/machinery/power/diesel_gen_segment
+	name = "diesel generator"
+	desc = "An old generator from the past, generating large amounts of power, while requiring more fuel and upkeep than modern day power generators. This should probably only be used as a last resort."
+	icon = 'icons/obj/machines/diesel_generator.dmi'
+	icon_state = "diesel_gen0"
+	anchored = TRUE
+	density = TRUE
+
+/obj/machinery/power/diesel_gen_segment/bottom_middle
+	icon_state = "diesel_gen1"
+
+/obj/machinery/power/diesel_gen_segment/bottom_right
+	icon_state = "diesel_gen2"
+
+/obj/machinery/power/diesel_gen_segment/bottom_right/Initialize()
+	. = ..()
+	var/year = rand(2005, 2025)
+	desc = "The year the generator was made seems to be engraved into the side. It reads [year]."
+
+/obj/machinery/power/diesel_gen_segment/top_left
+	icon_state = "diesel_gen3"
+
+/obj/machinery/power/diesel_gen_segment/top_middle
+	icon_state = "diesel_gen4"
+
+/obj/machinery/power/diesel_gen_segment/top_right
+	icon_state = "diesel_gen5"
