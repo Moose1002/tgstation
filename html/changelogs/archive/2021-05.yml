@@ -1,4 +1,5 @@
 2021-05-01:
+<<<<<<< HEAD
   ATHATH:
   - spellcheck: The shivering symptom has been renamed to be the "chills" symptom,
       per Cobby's request.
@@ -129,3 +130,7 @@
   tralezab:
   - bugfix: you can no longer copy honorbound, burdened, wizard mutations, other heinous
       shit
+=======
+  Mothblocks:
+  - bugfix: Midround events will now properly poll again.
+>>>>>>> f70654a03726a9a23769ea21d9ba0176be93d2b0
