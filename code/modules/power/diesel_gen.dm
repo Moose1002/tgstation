@@ -15,8 +15,10 @@
 	var/consumption_rate = 1 //How many units of diesel are used each cycle
 	var/fuel = 250 //The current amount of fuel in the tank
 	var/max_fuel = 500 //The max amount of fuel that can be put in the tank
-	var/current_heat = 0 //The generator's current heat
+	var/current_heat = 20 //The generator's current heat (20 is roughly room temperature so thats the minimum heat)
+	var/max_heat = 500
 	var/integrity = 100 //The generator's current integrity
+	var/power_level = 80 //At what % of power the generator is running on
 
 	//Sound Stuff
 	var/ignition_sound = "sound/machines/diesel_generator/diesel_ignition.ogg"
@@ -47,15 +49,31 @@
 		visible_message("<span class='notice'>[reac_volume] units of [exposing_reagent] is added to the generator's tank.</span>")
 		fuel += reac_volume
 
-/obj/machinery/power/diesel_gen/process()
-	if(active)
-		if(fuel <= 0)
-			ToggleGenerator()
-			return
-		UseFuel()
-
 /obj/machinery/power/diesel_gen/proc/UseFuel()
 	fuel -= consumption_rate
+
+/obj/machinery/power/diesel_gen/proc/ProcessHeat()
+	if(power_level > 80 && current_heat < max_heat && active)
+		current_heat += (power_level - 80) * 0.25
+	if(current_heat > 20)
+		if(power_level <= 80 && power_level >= 40)
+			current_heat -= (-power_level + 80) * 0.1
+		if(power_level < 40 || active == FALSE)
+			current_heat -= 4
+	else
+		current_heat = 20
+	if(current_heat >= max_heat)
+		current_heat = max_heat
+	if(current_heat == 20 && active == FALSE)
+		STOP_PROCESSING(SSmachines, src)
+
+/obj/machinery/power/diesel_gen/proc/ProcessIntegrity()
+	if (current_heat >= 300 && current_heat < 400)
+		integrity -= 0.5
+	else if (current_heat >= 400 && current_heat < max_heat)
+		integrity -= 1
+	else if (current_heat == max_heat)
+		integrity -= 2
 
 /obj/machinery/power/diesel_gen/proc/ToggleGenerator()
 	if (active)
@@ -78,10 +96,18 @@
 	else
 		playsound(src, stall_sound, 60)
 
-
 /obj/machinery/power/diesel_gen/attack_hand(mob/living/user, list/modifiers)
 	. = ..()
 	ToggleGenerator()
+
+/obj/machinery/power/diesel_gen/process()
+	if(active)
+		if(fuel <= 0)
+			ToggleGenerator()
+			return
+		UseFuel()
+	ProcessHeat()
+	ProcessIntegrity()
 
 /obj/machinery/power/diesel_gen_segment
 	name = "diesel generator"
