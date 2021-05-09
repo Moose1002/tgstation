@@ -9,21 +9,19 @@
 	use_power = NO_POWER_USE
 	layer = ABOVE_ALL_MOB_LAYER
 
-	var/active = FALSE
+	var/active = FALSE //Whether or not the generator is turned on right now
 	var/power_gen = 5000
 	var/power_output = 1
-	var/consumption = 0
-	var/fuel = 0
-	var/max_fuel = 500
-	var/fuel_name = ""
-	var/fuel_path = /obj/item/stack/sheet/mineral/plasma
-	var/fuel_left = 0 // How much is left of the sheet
-	var/time_per_unit = 260
-	var/current_heat = 0
-	var/base_icon = "portgen2_0"
-	var/datum/looping_sound/generator/soundloop
+	var/consumption_rate = 1 //How many units of diesel are used each cycle
+	var/fuel = 250 //The current amount of fuel in the tank
+	var/max_fuel = 500 //The max amount of fuel that can be put in the tank
+	var/current_heat = 0 //The generator's current heat
+	var/integrity = 100 //The generator's current integrity
 
-	interaction_flags_atom = INTERACT_ATOM_ATTACK_HAND | INTERACT_ATOM_UI_INTERACT | INTERACT_ATOM_REQUIRES_ANCHORED
+	//Sound Stuff
+	var/ignition_sound = "sound/machines/diesel_generator/diesel_ignition.ogg"
+	var/stall_sound = "sound/machines/diesel_generator/diesel_stall.ogg"
+	var/datum/looping_sound/diesel_generator/soundloop
 
 /obj/machinery/power/diesel_gen/Initialize()
 	. = ..()
@@ -39,9 +37,6 @@
 	if (!istype(exposing_reagent, /datum/reagent/diesel))
 		visible_message("<span class='notice'>[src] doesn't run on [exposing_reagent]!</span>")
 		return
-	if (reac_volume <= 0) //This might be pointless?
-		visible_message("<span class='notice'>MEGA TEST!!</span>")
-		return
 	if (fuel + reac_volume > max_fuel)
 		visible_message("<span class='notice'>As much [exposing_reagent] is added to the tank as it will hold but the tank overflows!</span>")
 		fuel = max_fuel
@@ -52,17 +47,41 @@
 		visible_message("<span class='notice'>[reac_volume] units of [exposing_reagent] is added to the generator's tank.</span>")
 		fuel += reac_volume
 
-/obj/machinery/power/diesel_gen/should_have_node()
-	return anchored
+/obj/machinery/power/diesel_gen/process()
+	if(active)
+		if(fuel <= 0)
+			ToggleGenerator()
+			return
+		UseFuel()
 
-/obj/machinery/power/diesel_gen/connect_to_network()
-	if(!anchored)
-		return FALSE
+/obj/machinery/power/diesel_gen/proc/UseFuel()
+	fuel -= consumption_rate
+
+/obj/machinery/power/diesel_gen/proc/ToggleGenerator()
+	if (active)
+		active = FALSE
+		visible_message("<span class='notice'>The [src.name] stalls out.</span>")
+		soundloop.stop()
+		addtimer(CALLBACK(src, .proc/ToggleSoundLoop), 1 SECONDS)
+	else if(fuel > 0)
+		active = TRUE
+		START_PROCESSING(SSmachines, src)
+		visible_message("<span class='notice'>The [src.name] roars to life!</span>")
+		playsound(src, ignition_sound, 60)
+		addtimer(CALLBACK(src, .proc/ToggleSoundLoop), 3 SECONDS)
+	else
+		visible_message("<span class='notice'>[src] doesn't want to start. It seems to be out of fuel.</span>")
+
+/obj/machinery/power/diesel_gen/proc/ToggleSoundLoop()
+	if (active)
+		soundloop.start()
+	else
+		playsound(src, stall_sound, 60)
+
+
+/obj/machinery/power/diesel_gen/attack_hand(mob/living/user, list/modifiers)
 	. = ..()
-
-/obj/machinery/power/diesel_gen/attackby(obj/item/W, mob/user, params)
-	. = ..()
-
+	ToggleGenerator()
 
 /obj/machinery/power/diesel_gen_segment
 	name = "diesel generator"

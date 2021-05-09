@@ -119,3 +119,12 @@
 	volume = 40
 	falloff_distance = 5
 	falloff_exponent = 20
+
+/datum/looping_sound/diesel_generator
+	start_sound = 'sound/machines/diesel_generator/diesel_start.ogg'
+	start_length = 4
+	mid_sounds = list('sound/machines/diesel_generator/diesel_mid1.ogg'=1)
+	mid_length = 4
+	end_sound = 'sound/machines/diesel_generator/diesel_end.ogg'
+	volume = 40
+	falloff_distance = 5
