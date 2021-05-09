@@ -155,7 +155,7 @@
 
 /obj/structure/reagent_dispensers/fueltank/dieseltank/
 	name = "diesel tank"
-	desc = "An old tank of disel fuel, rarely used due to advances in technology, but kept around for emergencies. Keep away from open flames."
+	desc = "An old tank of diesel fuel, rarely used due to advances in technology, but kept around for emergencies. Keep away from open flames."
 	icon_state = "diesel"
 	reagent_id = /datum/reagent/diesel
 
