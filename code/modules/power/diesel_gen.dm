@@ -9,7 +9,6 @@
 	use_power = NO_POWER_USE
 
 	var/integrity = 100 //The generator's current integrity
-	var/core = /obj/machinery/power/diesel_gen_segment/diesel_gen
 
 /obj/machinery/power/diesel_gen_segment/wrench_act(mob/living/user, obj/item/tool)
 	..()
@@ -23,25 +22,19 @@
 	return TRUE
 
 /obj/machinery/power/diesel_gen_segment/proc/SyncIntegrity()
-	for(var/obj/machinery/power/diesel_gen_segment/object in orange(1,src))
+	for(var/obj/machinery/power/diesel_gen_segment/object in orange(2,src))
 		object.integrity = src.integrity
 
 /obj/machinery/power/diesel_gen_segment/diesel_gen
 
 	var/active = FALSE //Whether or not the generator is turned on right now
-	var/power_gen = 5000
-	var/power_output = 1
+	var/power_gen = 200000 //How many watts of power the generator produces
 	var/consumption_rate = 1 //How many units of diesel are used each cycle
 	var/fuel = 250 //The current amount of fuel in the tank
 	var/max_fuel = 500 //The max amount of fuel that can be put in the tank
 	var/current_heat = 20 //The generator's current heat (20 is roughly room temperature so thats the minimum heat)
-	var/max_heat = 500
+	var/max_heat = 500 //The generator's max possible heat
 	var/power_level = 80 //At what % of power the generator is running on
-
-	var/list/connected_segments = list()
-
-	//Temp Variables (Change Laters)
-	var/core_segment = /obj/machinery/power/diesel_gen_segment/bottom_middle
 
 	//Sound Stuff
 	var/ignition_sound = "sound/machines/diesel_generator/diesel_ignition.ogg"
@@ -52,10 +45,14 @@
 	. = ..()
 	soundloop = new(list(src), active)
 	RegisterSignal(src, COMSIG_ATOM_EXPOSE_REAGENT, .proc/on_expose_reagent)
+	connect_to_network()
 
 /obj/machinery/power/diesel_gen_segment/diesel_gen/Destroy()
 	QDEL_NULL(soundloop)
 	return ..()
+
+/obj/machinery/power/port_gen/connect_to_network()
+	. = ..()
 
 /obj/machinery/power/diesel_gen_segment/diesel_gen/proc/on_expose_reagent(atom/parent_atom, datum/reagent/exposing_reagent, reac_volume)
 	SIGNAL_HANDLER
@@ -131,6 +128,8 @@
 			ToggleGenerator()
 			return
 		UseFuel()
+		if(powernet)
+			add_avail(power_gen * (power_level * 0.01))
 	ProcessHeat()
 	ProcessIntegrity()
 
