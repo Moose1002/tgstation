@@ -5,7 +5,7 @@
 	icon_state = "diesel_gen0"
 	anchored = TRUE
 	density = TRUE
-	layer = ABOVE_ALL_MOB_LAYER
+	layer = ABOVE_MOB_LAYER
 	use_power = NO_POWER_USE
 
 	var/integrity = 100 //The generator's current integrity
@@ -30,7 +30,8 @@
 	var/active = FALSE //Whether or not the generator is turned on right now
 	var/power_gen = 200000 //How many watts of power the generator produces
 	var/consumption_rate = 1 //How many units of diesel are used each cycle
-	var/fuel = 250 //The current amount of fuel in the tank
+	//Temporarily disabling this method of fuel var/fuel = 250 //The current amount of fuel in the tank
+	var/fuel_reagent = /datum/reagent/diesel
 	var/max_fuel = 500 //The max amount of fuel that can be put in the tank
 	var/current_heat = 20 //The generator's current heat (20 is roughly room temperature so thats the minimum heat)
 	var/max_heat = 500 //The generator's max possible heat
@@ -41,10 +42,14 @@
 	var/stall_sound = "sound/machines/diesel_generator/diesel_stall.ogg"
 	var/datum/looping_sound/diesel_generator/soundloop
 
+	var/reagent_flags = REFILLABLE
+
 /obj/machinery/power/diesel_gen_segment/diesel_gen/Initialize()
 	. = ..()
+	create_reagents(max_fuel, reagent_flags)
+	reagents.add_reagent(fuel_reagent, 250) //Adds 250 fuel for testing purposes
 	soundloop = new(list(src), active)
-	RegisterSignal(src, COMSIG_ATOM_EXPOSE_REAGENT, .proc/on_expose_reagent)
+	AddComponent(/datum/component/plumbing/simple_demand)
 	connect_to_network()
 
 /obj/machinery/power/diesel_gen_segment/diesel_gen/Destroy()
@@ -54,23 +59,19 @@
 /obj/machinery/power/port_gen/connect_to_network()
 	. = ..()
 
-/obj/machinery/power/diesel_gen_segment/diesel_gen/proc/on_expose_reagent(atom/parent_atom, datum/reagent/exposing_reagent, reac_volume)
-	SIGNAL_HANDLER
-	if (!istype(exposing_reagent, /datum/reagent/diesel))
-		visible_message("<span class='notice'>[src] doesn't run on [exposing_reagent]!</span>")
-		return
-	if (fuel + reac_volume > max_fuel)
-		visible_message("<span class='notice'>As much [exposing_reagent] is added to the tank as it will hold but the tank overflows!</span>")
-		fuel = max_fuel
-	else if (fuel + reac_volume == max_fuel)
-		visible_message("<span class='notice'>The perfect amount of [exposing_reagent] is added to the tank, without it overflowing. You're filled with satisfaction!</span>")
-		fuel += reac_volume
-	else
-		visible_message("<span class='notice'>[reac_volume] units of [exposing_reagent] is added to the generator's tank.</span>")
-		fuel += reac_volume
-
 /obj/machinery/power/diesel_gen_segment/diesel_gen/proc/UseFuel()
-	fuel -= consumption_rate
+	var/list/gen_reagents = reagents.reagent_list
+	var/non_fuel_volume //The volume of all non-fuel reagents added together
+	for(var/datum/reagent/holder_reagent as anything in gen_reagents)
+		if (holder_reagent.type != fuel_reagent)
+			non_fuel_volume += holder_reagent.volume
+	if(non_fuel_volume > 0) //Rather than running another for loop again to check if there is non-fuel reagents just see if there was any quantity of reagents when you run the earlier loop
+		reagents.isolate_reagent(fuel_reagent)
+		integrity -= non_fuel_volume * 0.1
+		visible_message("<span class='warning'>[src] makes a strange noise. It looks like it might be damaged!</span>")
+		ToggleGenerator()
+		return
+	reagents.remove_reagent(fuel_reagent, consumption_rate) //If the only reagent in the tank is Diesel then process fuel like normal
 
 /obj/machinery/power/diesel_gen_segment/diesel_gen/proc/ProcessHeat()
 	if(power_level > 80 && current_heat < max_heat && active)
@@ -88,25 +89,26 @@
 		STOP_PROCESSING(SSmachines, src)
 
 /obj/machinery/power/diesel_gen_segment/diesel_gen/proc/ProcessIntegrity()
-	if (current_heat >= 300)
-		if (current_heat < 400)
-			integrity -= 0.5
-		else if (current_heat >= 400 && current_heat < max_heat)
-			integrity -= 1
-		else if (current_heat == max_heat)
-			integrity -= 2
-		SyncIntegrity()
+	if (current_heat < 300)
+		return
+	if (current_heat >= 300 && current_heat < 400)
+		integrity -= 0.5
+	else if (current_heat >= 400 && current_heat < max_heat)
+		integrity -= 1
+	else if (current_heat == max_heat)
+		integrity -= 2
+	SyncIntegrity()
 
 /obj/machinery/power/diesel_gen_segment/diesel_gen/proc/ToggleGenerator()
 	if (active)
 		active = FALSE
-		visible_message("<span class='notice'>The [src.name] stalls out.</span>")
+		visible_message("<span class='notice'>[src] stalls out.</span>")
 		soundloop.stop()
 		addtimer(CALLBACK(src, .proc/ToggleSoundLoop), 1 SECONDS)
-	else if(fuel > 0)
+	else if(reagents.get_reagent_amount(fuel_reagent) > 0)
 		active = TRUE
 		START_PROCESSING(SSmachines, src)
-		visible_message("<span class='notice'>The [src.name] roars to life!</span>")
+		visible_message("<span class='notice'>[src] roars to life!</span>")
 		playsound(src, ignition_sound, 60)
 		addtimer(CALLBACK(src, .proc/ToggleSoundLoop), 3 SECONDS)
 	else
@@ -124,7 +126,7 @@
 
 /obj/machinery/power/diesel_gen_segment/diesel_gen/process()
 	if(active)
-		if(fuel <= 0)
+		if(reagents.get_reagent_amount(fuel_reagent) <= 0)
 			ToggleGenerator()
 			return
 		UseFuel()
