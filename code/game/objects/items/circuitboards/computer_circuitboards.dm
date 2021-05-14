@@ -554,3 +554,7 @@
 /obj/item/circuitboard/computer/exodrone_console
 	name = "Exploration odrone control console (Computer Board)"
 	build_path = /obj/machinery/computer/exodrone_control_console
+
+/obj/item/circuitboard/computer/emergency_request
+	name = "Emergency Request Console (Computer Board)"
+	build_path = /obj/machinery/computer/emergency_request
