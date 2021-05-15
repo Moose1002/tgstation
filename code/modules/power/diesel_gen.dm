@@ -30,19 +30,17 @@
 	var/active = FALSE //Whether or not the generator is turned on right now
 	var/power_gen = 200000 //How many watts of power the generator produces
 	var/consumption_rate = 1 //How many units of diesel are used each cycle
-	//Temporarily disabling this method of fuel var/fuel = 250 //The current amount of fuel in the tank
 	var/fuel_reagent = /datum/reagent/diesel
 	var/max_fuel = 500 //The max amount of fuel that can be put in the tank
 	var/current_heat = 20 //The generator's current heat (20 is roughly room temperature so thats the minimum heat)
 	var/max_heat = 500 //The generator's max possible heat
 	var/power_level = 80 //At what % of power the generator is running on
+	var/reagent_flags = REFILLABLE //Allows you to fill up the generator's tank with any reagent container
 
 	//Sound Stuff
 	var/ignition_sound = "sound/machines/diesel_generator/diesel_ignition.ogg"
 	var/stall_sound = "sound/machines/diesel_generator/diesel_stall.ogg"
 	var/datum/looping_sound/diesel_generator/soundloop
-
-	var/reagent_flags = REFILLABLE
 
 /obj/machinery/power/diesel_gen_segment/diesel_gen/Initialize()
 	. = ..()
@@ -70,6 +68,7 @@
 		integrity -= non_fuel_volume * 0.1
 		visible_message("<span class='warning'>[src] makes a strange noise. It looks like it might be damaged!</span>")
 		ToggleGenerator()
+		SyncIntegrity()
 		return
 	reagents.remove_reagent(fuel_reagent, consumption_rate) //If the only reagent in the tank is Diesel then process fuel like normal
 
@@ -98,6 +97,33 @@
 	else if (current_heat == max_heat)
 		integrity -= 2
 	SyncIntegrity()
+
+/**
+ * This is the proc that procces the mixture of gas that is produced when 1 unit of diesel is burned.
+ *
+ * The values are determined by the following calculations, these calulations are very rough and considering how 1 unit of
+ * a reagent seems to be different depending on the reagent container I wouldn't trust anything I write below, but I needed to
+ * figure out how many moles the exhaust mixture should have so I made it work.
+ *
+ * A Space Station 13 soda can holds 30 units of soda.
+ * A soda can is 12 fl oz, which is around 354.88 mL. I'm gonna round this up to 360 mL so it's easy to divide.
+ * If 30 units of soda is 360 mL, then a unit in Space Station 13 is around 12 mL, which is 0.012 L.
+ * If a Liter of diesel is around 850g then 0.012 is around 10.2g of diesel.
+ * For this I'm using the formula: C13H28 + 20O2 → 13CO2 + 14H2O as the formula of my combustion reaction.
+ * In this formula diesel (C13H28) has a molar mass of around 184.36.
+ * So 10.2g of diesel would be 0.0553 mol.
+ * Going back to our formula if 1 mol of diesel is 13 mol of CO2 and 14 mol of H2O then based on 0.0553 mol of diesel there
+ * would be 0.719 mol CO2 and 0.774 mol H2O.
+ * So after all of this chemistry I didn't need need to do I'll use the following values for this gas mixture.
+ */
+/obj/machinery/power/diesel_gen_segment/diesel_gen/proc/ProcessExhaust()
+	var/datum/gas_mixture/exhaust = new() //If my math is off let me know
+	exhaust.add_gases(/datum/gas/carbon_dioxide, /datum/gas/water_vapor)
+	exhaust.gases[/datum/gas/carbon_dioxide][MOLES] = 0.719 * consumption_rate
+	exhaust.gases[/datum/gas/water_vapor][MOLES] = 0.774 * consumption_rate
+	exhaust.temperature = T20C
+
+	loc.assume_air(exhaust)
 
 /obj/machinery/power/diesel_gen_segment/diesel_gen/proc/ToggleGenerator()
 	if (active)
@@ -134,6 +160,7 @@
 			add_avail(power_gen * (power_level * 0.01))
 	ProcessHeat()
 	ProcessIntegrity()
+	ProcessExhaust()
 
 /obj/machinery/power/diesel_gen_segment/bottom_middle
 	icon_state = "diesel_gen1"
