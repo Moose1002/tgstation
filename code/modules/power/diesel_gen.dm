@@ -116,14 +116,22 @@
  * would be 0.719 mol CO2 and 0.774 mol H2O.
  * So after all of this chemistry I didn't need need to do I'll use the following values for this gas mixture.
  */
-/obj/machinery/power/diesel_gen_segment/diesel_gen/proc/ProcessExhaust()
+/obj/machinery/power/diesel_gen_segment/diesel_gen/proc/ProcessGas()
+	var/datum/gas_mixture/air_contents = loc.return_air()
+	if(!air_contents.has_gas(/datum/gas/oxygen, 1.1 * consumption_rate))
+		ToggleGenerator()
+		visible_message("<span class='warning'>[src]'s engine grinds to a halt, it seems like it's out of oxygen!</span>")
+		return
+
+	air_contents.remove_specific(/datum/gas/oxygen, 1.1 * consumption_rate) //Slowly drain the room of oxygen
+
 	var/datum/gas_mixture/exhaust = new() //If my math is off let me know
 	exhaust.add_gases(/datum/gas/carbon_dioxide, /datum/gas/water_vapor)
 	exhaust.gases[/datum/gas/carbon_dioxide][MOLES] = 0.719 * consumption_rate
 	exhaust.gases[/datum/gas/water_vapor][MOLES] = 0.774 * consumption_rate
-	exhaust.temperature = T20C
+	exhaust.temperature = 422.04 //The temperature of the hot exhaust gas. This could make the room a little toasty
 
-	loc.assume_air(exhaust)
+	loc.assume_air(exhaust) //Unleash our exhaust gas of mass slippage to the world!!
 
 /obj/machinery/power/diesel_gen_segment/diesel_gen/proc/ToggleGenerator()
 	if (active)
@@ -158,9 +166,9 @@
 		UseFuel()
 		if(powernet)
 			add_avail(power_gen * (power_level * 0.01))
+		ProcessGas()
 	ProcessHeat()
 	ProcessIntegrity()
-	ProcessExhaust()
 
 /obj/machinery/power/diesel_gen_segment/bottom_middle
 	icon_state = "diesel_gen1"
