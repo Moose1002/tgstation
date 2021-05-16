@@ -1116,6 +1116,24 @@
 	crate_name = "water tank crate"
 	crate_type = /obj/structure/closet/crate/large
 
+/datum/supply_pack/materials/dieseltank
+	name = "Diesel Fuel Crate"
+	desc = "Contains a tank of diesel fuel. Not heavily produced anymore so prices might be higher."
+	cost = CARGO_CRATE_VALUE * 5
+	access_view = ACCESS_ENGINE
+	contains = list(/obj/structure/reagent_dispensers/fueltank/dieseltank)
+	crate_name = "diesel fuel crate"
+	crate_type = /obj/structure/closet/crate/large
+
+/datum/supply_pack/materials/hightankdiesel
+	name = "Large Diesel Fuel Crate"
+	desc = "Contains a high-capacity tank of diesel fuel. This high of a quantity can be expensive."
+	cost = CARGO_CRATE_VALUE * 20
+	access_view = ACCESS_ENGINE
+	contains = list(/obj/structure/reagent_dispensers/fueltank/dieseltank/large)
+	crate_name = "diesel fuel crate"
+	crate_type = /obj/structure/closet/crate/large
+
 /datum/supply_pack/materials/gas_canisters
 	cost = CARGO_CRATE_VALUE * 0.05
 	contains = list(/obj/machinery/portable_atmospherics/canister)

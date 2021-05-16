@@ -159,6 +159,12 @@
 	icon_state = "diesel"
 	reagent_id = /datum/reagent/diesel
 
+/obj/structure/reagent_dispensers/fueltank/dieseltank/large
+	name = "high capacity diesel tank"
+	desc = "An old high capacity tank of diesel fuel. Getting this much diesel fuel was no easy task Keep away from open flames."
+	icon_state = "diesel_high"
+	tank_volume = 5000
+
 /obj/structure/reagent_dispensers/peppertank
 	name = "pepper spray refiller"
 	desc = "Contains condensed capsaicin for use in law \"enforcement.\""
