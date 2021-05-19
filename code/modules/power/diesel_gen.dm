@@ -27,20 +27,34 @@
 
 /obj/machinery/power/diesel_gen_segment/diesel_gen
 
-	var/active = FALSE //Whether or not the generator is turned on right now
-	var/power_gen = 200000 //How many watts of power the generator produces
-	var/consumption_rate = 1 //How many units of diesel are used each cycle
+	///Whether or not the generator is turned on right now
+	var/active = FALSE
+	///How many watts of power the generator produces
+	var/power_gen = 200000
+	///How many units of diesel are used each cycle
+	var/consumption_rate = 1
+	///The fuel reagent the generator should run on
 	var/fuel_reagent = /datum/reagent/diesel
-	var/max_fuel = 500 //The max amount of fuel that can be put in the tank
-	var/current_heat = 20 //The generator's current heat (20 is roughly room temperature so thats the minimum heat)
-	var/max_heat = 500 //The generator's max possible heat
-	var/power_level = 80 //At what % of power the generator is running on
-	var/reagent_flags = REFILLABLE //Allows you to fill up the generator's tank with any reagent container
+	///The max amount of reagents that can be put in the tank
+	var/max_fuel = 500
+	///The generator's current heat (20 is roughly room temperature so thats the minimum heat)
+	var/current_heat = 20
+	///The generator's max possible heat
+	var/max_heat = 500
+	///At what % of power the generator is running on
+	var/power_level = 80
+	//Allows you to fill up the generator's tank with any reagent container
+	var/reagent_flags = REFILLABLE
 
 	//Sound Stuff
+
+	///The sound that plays when the generator is turned on
 	var/ignition_sound = "sound/machines/diesel_generator/diesel_ignition.ogg"
+	///The sound that plays when the generator is turned off, either by hand, or by the generator turning itself off due to a problem
 	var/stall_sound = "sound/machines/diesel_generator/diesel_stall.ogg"
+	///The generator's soundloop
 	var/datum/looping_sound/diesel_generator/soundloop
+
 
 /obj/machinery/power/diesel_gen_segment/diesel_gen/Initialize()
 	. = ..()
@@ -49,14 +63,34 @@
 	soundloop = new(list(src), active)
 	AddComponent(/datum/component/plumbing/simple_demand)
 	connect_to_network()
+	update_appearance()
 
 /obj/machinery/power/diesel_gen_segment/diesel_gen/Destroy()
 	QDEL_NULL(soundloop)
 	return ..()
 
-/obj/machinery/power/port_gen/connect_to_network()
+/obj/machinery/power/diesel_gen_segment/diesel_gen/connect_to_network()
 	. = ..()
 
+/obj/machinery/power/diesel_gen_segment/diesel_gen/update_overlays()
+	. = ..()
+	. += generator_update_overlays()
+
+/obj/machinery/power/diesel_gen_segment/diesel_gen/proc/generator_update_overlays()
+	. = list()
+	if(active)
+		. += mutable_appearance("icons/obj/machines/diesel_generator.dmi", "smoke", ABOVE_MOB_LAYER + 0.01)
+	else
+		. += mutable_appearance("icons/obj/machines/diesel_generator.dmi", "test", ABOVE_MOB_LAYER + 0.01)
+
+/**
+ * Handles burning diesel fuel and dealing with non-fuel reagents
+ *
+ * Checks every reagent in the generator and then isolates just diesel fuel.
+ * If a reagent is put into the generator that isn't the correct fuel reagent then the generator "filters" it and lowers the integrity.
+ *
+ * If the generator doesn't have any non-fuel reagents, then the generator runs like normal.
+ */
 /obj/machinery/power/diesel_gen_segment/diesel_gen/proc/UseFuel()
 	var/list/gen_reagents = reagents.reagent_list
 	var/non_fuel_volume //The volume of all non-fuel reagents added together
@@ -72,24 +106,26 @@
 		return
 	reagents.remove_reagent(fuel_reagent, consumption_rate) //If the only reagent in the tank is Diesel then process fuel like normal
 
+///Handles generator temperature
 /obj/machinery/power/diesel_gen_segment/diesel_gen/proc/ProcessHeat()
-	if(power_level > 80 && current_heat < max_heat && active)
+
+	if(power_level > 80 && current_heat < max_heat && active) //Running the generator at a power level over 80 will increase heat
 		current_heat += (power_level - 80) * 0.25
 	if(current_heat > 20)
-		if(power_level <= 80 && power_level >= 40)
+		if(power_level <= 80 && power_level >= 40) //If power level is less than 80 the heat will decrease
 			current_heat -= (-power_level + 80) * 0.1
-		if(power_level < 40 || active == FALSE)
+		if(power_level < 40 || !active) //Heat decreases at it's max value when either off or lower than 40, it can't cool down any faster
 			current_heat -= 4
 	else
 		current_heat = 20
-	if(current_heat >= max_heat)
+	if(current_heat > max_heat)
 		current_heat = max_heat
-	if(current_heat == 20 && active == FALSE)
+	if(current_heat <= 20 && !active)
 		STOP_PROCESSING(SSmachines, src)
 
+///Processes the generator's integrity based on the generator's temperature
 /obj/machinery/power/diesel_gen_segment/diesel_gen/proc/ProcessIntegrity()
-	if (current_heat < 300)
-		return
+
 	if (current_heat >= 300 && current_heat < 400)
 		integrity -= 0.5
 	else if (current_heat >= 400 && current_heat < max_heat)
@@ -118,7 +154,7 @@
  */
 /obj/machinery/power/diesel_gen_segment/diesel_gen/proc/ProcessGas()
 	var/datum/gas_mixture/air_contents = loc.return_air()
-	if(!air_contents.has_gas(/datum/gas/oxygen, 1.1 * consumption_rate))
+	if(!air_contents.has_gas(/datum/gas/oxygen, 1.1 * consumption_rate)) //No, diesel generator's do no run in space
 		ToggleGenerator()
 		visible_message("<span class='warning'>[src]'s engine grinds to a halt, it seems like it's out of oxygen!</span>")
 		return
@@ -133,20 +169,23 @@
 
 	loc.assume_air(exhaust) //Unleash our exhaust gas of mass slippage to the world!!
 
+
+///Turns the generator either on or off depending on it's condition
 /obj/machinery/power/diesel_gen_segment/diesel_gen/proc/ToggleGenerator()
-	if (active)
+	if (active) //If the generator is on, turn it off
 		active = FALSE
 		visible_message("<span class='notice'>[src] stalls out.</span>")
 		soundloop.stop()
-		addtimer(CALLBACK(src, .proc/ToggleSoundLoop), 1 SECONDS)
-	else if(reagents.get_reagent_amount(fuel_reagent) > 0)
+		addtimer(CALLBACK(src, .proc/ToggleSoundLoop), 1 SECONDS) //Wait a second for the soundloop to wrap up
+	else if(reagents.get_reagent_amount(fuel_reagent) > 0) //If the generator is off, and has fuel, turn it on
 		active = TRUE
 		START_PROCESSING(SSmachines, src)
 		visible_message("<span class='notice'>[src] roars to life!</span>")
 		playsound(src, ignition_sound, 60)
-		addtimer(CALLBACK(src, .proc/ToggleSoundLoop), 3 SECONDS)
-	else
+		addtimer(CALLBACK(src, .proc/ToggleSoundLoop), 3 SECONDS) //Wait a few seconds for the ignition sound to play
+	else //If the fuel doesn't have any fuel, don't do anything
 		visible_message("<span class='notice'>[src] doesn't want to start. It seems to be out of fuel.</span>")
+	update_appearance()
 
 /obj/machinery/power/diesel_gen_segment/diesel_gen/proc/ToggleSoundLoop()
 	if (active)
@@ -154,21 +193,23 @@
 	else
 		playsound(src, stall_sound, 60)
 
+///When the generator is clicked, turn it on or off
 /obj/machinery/power/diesel_gen_segment/diesel_gen/attack_hand(mob/living/user, list/modifiers)
 	. = ..()
 	ToggleGenerator()
 
 /obj/machinery/power/diesel_gen_segment/diesel_gen/process()
 	if(active)
-		if(reagents.get_reagent_amount(fuel_reagent) <= 0)
+		if(reagents.get_reagent_amount(fuel_reagent) <= 0) //Looks like we ran out of fuel, can't run a engine with no fuel!
 			ToggleGenerator()
 			return
-		UseFuel()
+		UseFuel() //Looks like we have fuel, so we'll use it.
 		if(powernet)
-			add_avail(power_gen * (power_level * 0.01))
-		ProcessGas()
-	ProcessHeat()
-	ProcessIntegrity()
+			add_avail(power_gen * (power_level * 0.01)) //Actually generate power for the station.
+		ProcessGas() //Engines take in and let out gasses, lets process those.
+	if (current_heat < 300) //Integrity is only lowered if the generator is hot, so if it's not don't worry about processing it.
+		ProcessIntegrity()
+	ProcessHeat() //If the generator is on and the powerlevel is high we'll heat up, if it's off and/or powerlevel is low we'll cool off
 
 /obj/machinery/power/diesel_gen_segment/bottom_middle
 	icon_state = "diesel_gen1"
@@ -176,6 +217,12 @@
 /obj/machinery/power/diesel_gen_segment/bottom_right
 	icon_state = "diesel_gen2"
 
+/**
+ * Gives the generator a random year of manufacturing
+ *
+ * I just wanted to add a little detail to make the generators seem a bit more outdated.
+ * Creates a random year between 2005-2025 and then applies it to the description when you examine it
+ */
 /obj/machinery/power/diesel_gen_segment/bottom_right/Initialize()
 	. = ..()
 	var/year = rand(2005, 2025)
