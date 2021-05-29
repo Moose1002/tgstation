@@ -8,17 +8,59 @@
 	layer = ABOVE_MOB_LAYER
 	use_power = NO_POWER_USE
 
-	var/integrity = 100 //The generator's current integrity
+	///The generator segment's current integrity, get synced to all other segments whenever the value changes
+	var/integrity = 100
+	///Whether or not the segment you're working on has 1 sheet of iron in place
+	var/hasMetal = FALSE
 
 /obj/machinery/power/diesel_gen_segment/wrench_act(mob/living/user, obj/item/tool)
 	..()
 	if (integrity < 100)
-		integrity += 2
-		tool.play_tool_sound(src, 50)
-		visible_message("<span class='notice'>[user] hits the generator with a wrench, reparing some of the damage.</span>")
-		SyncIntegrity()
+		if (integrity >= 60)
+			tool.use_tool(src, user, 10, volume = 50)
+			integrity += 2
+			visible_message("<span class='notice'>[user] hits the generator with a wrench, repairing some of the damage.</span>")
+			SyncIntegrity()
+		else
+			to_chat(user, "<span class='notice'>[src] looks to damaged for simple wrenching. It looks like you'll have to weld new segments on.</span>")
 	else
 		to_chat(user, "<span class='notice'>[src] doesn't need repairs!</span>")
+	return TRUE
+
+/obj/machinery/power/diesel_gen_segment/welder_act(mob/living/user, obj/item/tool)
+	. = ..()
+	if (integrity < 60)
+		if(!hasMetal)
+			to_chat(user, "<span class='notice'>The plating is beyond salvaging, it's best to replace the old plating with a fresh iron sheet.</span>")
+			return
+		if(!tool.tool_start_check(user))
+			return
+		to_chat(user, "<span class='notice'>You start to add new metal plates to [src]'s plating.</span>")
+		if(tool.use_tool(src, user, 40, , volume = 50))
+			integrity += 10
+			hasMetal = FALSE
+			visible_message("<span class='notice'>[user] welds new plating onto the generator, repairing some of the damage.</span>")
+			SyncIntegrity()
+	else
+		if (integrity >= 100)
+			to_chat(user, "<span class='notice'>[src] doesn't need any welding, it seems to be in good condition.</span>")
+		else
+			to_chat(user, "<span class='notice'>[src] doesn't need any welding, just some simple bolt tightening should do the trick.</span>")
+	return TRUE
+
+/obj/machinery/power/diesel_gen_segment/attackby(obj/item/W, mob/user, params)
+	if(istype(W, /obj/item/stack/sheet/iron))
+		if(hasMetal)
+			to_chat(user, "<span class='notice'>There is already a plate placed in place, you need to weld it to secure it down.</span>")
+			return
+		if(!W.tool_start_check(user, amount=1))
+			return
+
+		to_chat(user, "<span class='notice'>You start to add new metal plates to [src]'s plating.</span>")
+		if(W.use_tool(src, user, 20, volume=50, amount=1))
+			hasMetal = TRUE
+			to_chat(user, "<span class='notice'>You add fresh metal plates to the [src]'s plating'.</span>")
+		return
 	return TRUE
 
 /obj/machinery/power/diesel_gen_segment/proc/SyncIntegrity()
@@ -60,7 +102,7 @@
 	. = ..()
 	create_reagents(max_fuel, reagent_flags)
 	reagents.add_reagent(fuel_reagent, 250) //Adds 250 fuel for testing purposes
-	soundloop = new(list(src), active)
+	soundloop = new(list(src), FALSE)
 	AddComponent(/datum/component/plumbing/simple_demand)
 	connect_to_network()
 	update_appearance()
