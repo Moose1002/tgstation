@@ -71,6 +71,8 @@
 
 	///Whether or not the generator is turned on right now
 	var/active = FALSE
+	///The key the generator currently has in it
+	var/obj/item/key/inserted_key
 	///How many watts of power the generator produces
 	var/power_gen = 200000
 	///How many units of diesel are used each cycle
@@ -238,7 +240,30 @@
 ///When the generator is clicked, turn it on or off
 /obj/machinery/power/diesel_gen_segment/diesel_gen/attack_hand(mob/living/user, list/modifiers)
 	. = ..()
-	ToggleGenerator()
+	if(inserted_key)
+		ToggleGenerator()
+	else
+		to_chat(user, "<span class='notice'>[src] seems to be missing the ignition key.</span>")
+
+/obj/machinery/power/diesel_gen_segment/diesel_gen/attackby(obj/item/W, mob/user, params)
+	if(!istype(W, /obj/item/key/diesel_gen))
+		return ..()
+	if(inserted_key)
+		to_chat(user, "<span class='warning'>There seems to already be a key inserted in [src]</span>")
+		return
+	if(!user.transferItemToLoc(W, src))
+		to_chat(user, "<span class='warning'>[W] seems to be stuck to your hand!</span>")
+		return
+	to_chat(user, "<span class='notice'>You insert the [W] into the [src].</span>")
+	inserted_key = W
+
+/obj/machinery/power/diesel_gen_segment/diesel_gen/AltClick(mob/user)
+	if(!inserted_key)
+		return ..()
+	to_chat(user, "<span class='notice'>You remove [inserted_key] from [src].</span>")
+	inserted_key.forceMove(drop_location())
+	user.put_in_hands(inserted_key)
+	inserted_key = null
 
 /obj/machinery/power/diesel_gen_segment/diesel_gen/process()
 	if(active)
@@ -280,3 +305,16 @@
 /obj/machinery/power/diesel_gen_segment/top_right
 	icon_state = "diesel_gen5"
 	density = FALSE
+
+//////////////////////////////////
+
+/obj/item/key/diesel_gen
+	name = "Diesel Generator Key"
+	desc = "A small grey key for starting an old diesel generator. Nanotrasen has provided a spare in the quartermaste's office, in case you lose this one!"
+	icon = 'icons/obj/machines/diesel_generator.dmi'
+	icon_state = "key"
+
+/obj/item/key/diesel_gen/spare
+	name = "Diesel Generator Spare Key"
+	desc = "A spare key used for starting an old diesel generator."
+
