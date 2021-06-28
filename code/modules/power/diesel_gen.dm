@@ -3,6 +3,7 @@
 	desc = "An old generator from the past, generating large amounts of power, while requiring more fuel and upkeep than modern day power generators. This should probably only be used as a last resort."
 	icon = 'icons/obj/machines/diesel_generator.dmi'
 	icon_state = "diesel_gen0"
+	base_icon_state = "diesel_gen0"
 	anchored = TRUE
 	density = TRUE
 	layer = ABOVE_MOB_LAYER
@@ -20,7 +21,7 @@
 			tool.use_tool(src, user, 10, volume = 50)
 			integrity += 2
 			visible_message("<span class='notice'>[user] hits the generator with a wrench, repairing some of the damage.</span>")
-			SyncIntegrity()
+			SyncIntegrity("repair")
 		else
 			to_chat(user, "<span class='notice'>[src] looks to damaged for simple wrenching. It looks like you'll have to weld new segments on.</span>")
 	else
@@ -35,12 +36,12 @@
 			return
 		if(!tool.tool_start_check(user))
 			return
-		to_chat(user, "<span class='notice'>You start to add new metal plates to [src]'s plating.</span>")
+		to_chat(user, "<span class='notice'>You start to weld new metal plates to [src]'s plating.</span>")
 		if(tool.use_tool(src, user, 40, , volume = 50))
 			integrity += 10
 			hasMetal = FALSE
 			visible_message("<span class='notice'>[user] welds new plating onto the generator, repairing some of the damage.</span>")
-			SyncIntegrity()
+			SyncIntegrity("repair")
 	else
 		if (integrity >= 100)
 			to_chat(user, "<span class='notice'>[src] doesn't need any welding, it seems to be in good condition.</span>")
@@ -55,7 +56,6 @@
 			return
 		if(!W.tool_start_check(user, amount=1))
 			return
-
 		to_chat(user, "<span class='notice'>You start to add new metal plates to [src]'s plating.</span>")
 		if(W.use_tool(src, user, 20, volume=50, amount=1))
 			hasMetal = TRUE
@@ -63,9 +63,38 @@
 		return
 	return TRUE
 
-/obj/machinery/power/diesel_gen_segment/proc/SyncIntegrity()
+//When mapping, multiple diesel generators should be placed at least 2 tiles apart from each other to prevent one generator's stats syncing to the other
+/obj/machinery/power/diesel_gen_segment/proc/SyncIntegrity(var/integrity_type)
 	for(var/obj/machinery/power/diesel_gen_segment/object in orange(2,src))
 		object.integrity = src.integrity
+		SyncIcon(object, integrity_type)
+	SyncIcon(src, integrity_type)
+
+/obj/machinery/power/diesel_gen_segment/proc/SyncIcon(obj/machinery/power/diesel_gen_segment/object, integrity_type)
+	object.icon_state = object.base_icon_state //Set the icon to the base icon, so it doesn't try to continually make the icon_state = "diesel_gen0_1_1_1_1_1_1"
+	if(integrity_type == "damage")
+		if(object.integrity <= 90 && object.integrity > 80)
+			object.icon_state = "[object.icon_state]_1"
+			return
+		if(object.integrity <= 80 && object.integrity > 60)
+			object.icon_state = "[object.icon_state]_2"
+			return
+		if(object.integrity <= 60 && object.integrity > 40)
+			object.icon_state = "[object.icon_state]_3"
+			return
+		if(object.integrity <= 40)
+			object.icon_state = "[object.icon_state]_4"
+			return
+	else
+		if(object.integrity <= 90 && object.integrity > 60)
+			object.icon_state = "[object.icon_state]_repair_1"
+			return
+		if(object.integrity <= 60 && object.integrity > 40)
+			object.icon_state = "[object.icon_state]_repair_2"
+			return
+		if(object.integrity <= 40)
+			object.icon_state = "[object.icon_state]_repair_3"
+			return
 
 /obj/machinery/power/diesel_gen_segment/diesel_gen
 
@@ -107,7 +136,7 @@
 	soundloop = new(list(src), FALSE)
 	AddComponent(/datum/component/plumbing/simple_demand)
 	connect_to_network()
-	update_appearance()
+	//update_appearance()
 
 /obj/machinery/power/diesel_gen_segment/diesel_gen/Destroy()
 	QDEL_NULL(soundloop)
@@ -115,7 +144,7 @@
 
 /obj/machinery/power/diesel_gen_segment/diesel_gen/connect_to_network()
 	. = ..()
-
+/**
 /obj/machinery/power/diesel_gen_segment/diesel_gen/update_overlays()
 	. = ..()
 	. += generator_update_overlays()
@@ -126,7 +155,7 @@
 		. += mutable_appearance("icons/obj/machines/diesel_generator.dmi", "smoke", ABOVE_MOB_LAYER + 0.01)
 	else
 		. += mutable_appearance("icons/obj/machines/diesel_generator.dmi", "test", ABOVE_MOB_LAYER + 0.01)
-
+*/
 /**
  * Handles burning diesel fuel and dealing with non-fuel reagents
  *
@@ -146,7 +175,7 @@
 		integrity -= non_fuel_volume * 0.1
 		visible_message("<span class='warning'>[src] makes a strange noise. It looks like it might be damaged!</span>")
 		ToggleGenerator()
-		SyncIntegrity()
+		SyncIntegrity("damage")
 		return
 	reagents.remove_reagent(fuel_reagent, consumption_rate) //If the only reagent in the tank is Diesel then process fuel like normal
 
@@ -169,14 +198,13 @@
 
 ///Processes the generator's integrity based on the generator's temperature
 /obj/machinery/power/diesel_gen_segment/diesel_gen/proc/ProcessIntegrity()
-
-	if (current_heat >= 300 && current_heat < 400)
+	if (current_heat < 400)
 		integrity -= 0.5
 	else if (current_heat >= 400 && current_heat < max_heat)
 		integrity -= 1
 	else if (current_heat == max_heat)
 		integrity -= 2
-	SyncIntegrity()
+	SyncIntegrity("damage")
 
 /**
  * This is the proc that procces the mixture of gas that is produced when 1 unit of diesel is burned.
@@ -274,15 +302,17 @@
 		if(powernet)
 			add_avail(power_gen * (power_level * 0.01)) //Actually generate power for the station.
 		ProcessGas() //Engines take in and let out gasses, lets process those.
-	if (current_heat < 300) //Integrity is only lowered if the generator is hot, so if it's not don't worry about processing it.
+	if (current_heat >= 300) //Integrity is only lowered if the generator is hot, so if it's not don't worry about processing it.
 		ProcessIntegrity()
 	ProcessHeat() //If the generator is on and the powerlevel is high we'll heat up, if it's off and/or powerlevel is low we'll cool off
 
 /obj/machinery/power/diesel_gen_segment/bottom_middle
 	icon_state = "diesel_gen1"
+	base_icon_state = "diesel_gen1"
 
 /obj/machinery/power/diesel_gen_segment/bottom_right
 	icon_state = "diesel_gen2"
+	base_icon_state = "diesel_gen2"
 
 /**
  * Gives the generator a random year of manufacturing
@@ -297,13 +327,15 @@
 
 /obj/machinery/power/diesel_gen_segment/top_left
 	icon_state = "diesel_gen3"
-
+	base_icon_state = "diesel_gen3"
 	density = FALSE
 /obj/machinery/power/diesel_gen_segment/top_middle
 	icon_state = "diesel_gen4"
+	base_icon_state = "diesel_gen4"
 	density = FALSE
 /obj/machinery/power/diesel_gen_segment/top_right
 	icon_state = "diesel_gen5"
+	base_icon_state = "diesel_gen5"
 	density = FALSE
 
 //////////////////////////////////
