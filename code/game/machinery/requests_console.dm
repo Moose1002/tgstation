@@ -380,6 +380,9 @@ GLOBAL_LIST_EMPTY(req_console_ckey_departments)
 	var/list/data = list()
 	data["department"] = department
 	data["silent"] = silent
+	data["recipientDepartment"] = to_department
+	data["assistanceDepartments"] = GLOB.req_console_assistance
+	data["suppliesDepartments"] = GLOB.req_console_supplies
 
 	return data
 
@@ -390,6 +393,8 @@ GLOBAL_LIST_EMPTY(req_console_ckey_departments)
 	switch(action)
 		if("silence")
 			silent = !silent
+		if("to_department")
+			to_department = params["department"]
 
 	update_icon()
 
