@@ -139,37 +139,11 @@ GLOBAL_LIST_EMPTY(req_console_ckey_departments)
 	GLOB.allConsoles -= src
 	return ..()
 
-/obj/machinery/requests_console/proc/departments_table(list/req_consoles)
-	var/dat = ""
-	dat += "<table width='100%'>"
-	for(var/req_dpt in req_consoles)
-		if (req_dpt != department)
-			dat += "<tr>"
-			dat += "<td width='55%'>[req_dpt]</td>"
-			dat += "<td width='45%'><A href='?src=[REF(src)];write=[ckey(req_dpt)];priority=[REQ_NORMAL_MESSAGE_PRIORITY]'>Normal</A> <A href='?src=[REF(src)];write=[ckey(req_dpt)];priority=[REQ_HIGH_MESSAGE_PRIORITY]'>High</A>"
-			if(hackState)
-				dat += "<A href='?src=[REF(src)];write=[ckey(req_dpt)];priority=[REQ_EXTREME_MESSAGE_PRIORITY]'>EXTREME</A>"
-			dat += "</td>"
-			dat += "</tr>"
-	dat += "</table>"
-	dat += "<BR><A href='?src=[REF(src)];setScreen=[REQ_SCREEN_MAIN]'><< Back</A><BR>"
-	return dat
-
 /obj/machinery/requests_console/Topic(href, href_list)
 	if(..())
 		return
 	usr.set_machine(src)
 	add_fingerprint(usr)
-
-	if(href_list["write"])
-		to_department = ckey(reject_bad_text(href_list["write"])) //write contains the string of the receiving department's name
-
-		var/new_message = (to_department in GLOB.req_console_ckey_departments) && stripped_input(usr, "Write your message:", "Awaiting Input", "", MAX_MESSAGE_LEN)
-		if(new_message)
-			to_department = GLOB.req_console_ckey_departments[to_department]
-			message = new_message
-			screen = REQ_SCREEN_AUTHENTICATE
-			priority = clamp(text2num(href_list["priority"]), REQ_NORMAL_MESSAGE_PRIORITY, REQ_EXTREME_MESSAGE_PRIORITY)
 
 	if(href_list["writeAnnouncement"])
 		var/new_message = reject_bad_text(stripped_input(usr, "Write your message:", "Awaiting Input", "", MAX_MESSAGE_LEN))
@@ -216,56 +190,6 @@ GLOBAL_LIST_EMPTY(req_console_ckey_departments)
 				Radio.talk_into(src,"[emergency] emergency in [department]!!",radio_freq)
 				update_appearance()
 				addtimer(CALLBACK(src, .proc/clear_emergency), 5 MINUTES)
-
-	if(href_list["send"] && message && to_department && priority)
-
-		var/radio_freq
-		switch(ckey(to_department))
-			if("bridge")
-				radio_freq = FREQ_COMMAND
-			if("medbay")
-				radio_freq = FREQ_MEDICAL
-			if("science")
-				radio_freq = FREQ_SCIENCE
-			if("engineering")
-				radio_freq = FREQ_ENGINEERING
-			if("security")
-				radio_freq = FREQ_SECURITY
-			if("cargobay" || "mining")
-				radio_freq = FREQ_SUPPLY
-
-		var/datum/signal/subspace/messaging/rc/signal = new(src, list(
-			"sender" = department,
-			"rec_dpt" = to_department,
-			"send_dpt" = department,
-			"message" = message,
-			"verified" = msgVerified,
-			"stamped" = msgStamped,
-			"priority" = priority,
-			"notify_freq" = radio_freq
-		))
-		signal.send_to_receivers()
-
-		screen = signal.data["done"] ? REQ_SCREEN_SENT : REQ_SCREEN_ERR
-
-	//Handle screen switching
-	if(href_list["setScreen"])
-		var/set_screen = clamp(text2num(href_list["setScreen"]) || 0, REQ_SCREEN_MAIN, REQ_SCREEN_ANNOUNCE)
-		switch(set_screen)
-			if(REQ_SCREEN_MAIN)
-				to_department = ""
-				msgVerified = ""
-				msgStamped = ""
-				message = ""
-				priority = -1
-			if(REQ_SCREEN_ANNOUNCE)
-				if(!announcementConsole)
-					return
-		screen = set_screen
-
-	//Handle silencing the console
-	if(href_list["setSilent"])
-		silent = text2num(href_list["setSilent"]) ? TRUE : FALSE
 
 	updateUsrDialog()
 
@@ -403,9 +327,39 @@ GLOBAL_LIST_EMPTY(req_console_ckey_departments)
 			priority = params["priority"]
 		if("send_message")
 			if(!to_department)
+				return
 			if(!priority)
+				return
 			if(!message)
+				return
 
+			var/radio_freq
+			switch(ckey(to_department))
+				if("bridge")
+					radio_freq = FREQ_COMMAND
+				if("medbay")
+					radio_freq = FREQ_MEDICAL
+				if("science")
+					radio_freq = FREQ_SCIENCE
+				if("engineering")
+					radio_freq = FREQ_ENGINEERING
+				if("security")
+					radio_freq = FREQ_SECURITY
+				if("cargobay" || "mining")
+					radio_freq = FREQ_SUPPLY
+
+			var/datum/signal/subspace/messaging/rc/signal = new(src, list(
+			"sender" = department,
+			"rec_dpt" = to_department,
+			"send_dpt" = department,
+			"message" = message,
+			"verified" = msgVerified,
+			"stamped" = msgStamped,
+			"priority" = priority,
+			"notify_freq" = radio_freq
+			))
+
+			signal.send_to_receivers()
 
 	update_icon()
 
