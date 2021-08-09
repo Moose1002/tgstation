@@ -380,6 +380,8 @@ GLOBAL_LIST_EMPTY(req_console_ckey_departments)
 	var/list/data = list()
 	data["department"] = department
 	data["silent"] = silent
+	data["message"] = message
+	data["messagePriority"] = priority
 	data["recipientDepartment"] = to_department
 	data["assistanceDepartments"] = GLOB.req_console_assistance
 	data["suppliesDepartments"] = GLOB.req_console_supplies
@@ -393,8 +395,17 @@ GLOBAL_LIST_EMPTY(req_console_ckey_departments)
 	switch(action)
 		if("silence")
 			silent = !silent
-		if("to_department")
+		if("set_message")
+			message = params["message"]
+		if("set_message_department")
 			to_department = params["department"]
+		if("set_message_priority")
+			priority = params["priority"]
+		if("send_message")
+			if(!to_department)
+			if(!priority)
+			if(!message)
+
 
 	update_icon()
 

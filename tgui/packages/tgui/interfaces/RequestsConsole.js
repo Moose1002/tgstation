@@ -1,5 +1,5 @@
 import { useBackend, useLocalState } from '../backend';
-import { Box, Button, Dropdown, LabeledList, Section, Stack, Tabs } from '../components';
+import { Box, Button, Dropdown, LabeledList, Section, Stack, Tabs, TextArea } from '../components';
 import { Window } from '../layouts';
 
 export const RequestsConsole = (props, context) => {
@@ -61,12 +61,34 @@ export const RequestsConsoleRequest = (props, context) => {
   const { act, data } = useBackend(context);
   return (
     <Section
-      title="Request Console">
-      <DepartmentDropdown/>
+      title="Create Request">
+      <DepartmentDropdown />
       <Button
-        content="Normal Priority"/>
+        content="Low Priority" />
       <Button
-        content="High Priority"/>
+        content="Normal Priority"
+        selected={data.messagePriority === 1}
+        onClick={() => act("set_message_priority", {
+          priority: 1
+        })} />
+      <Button
+        content="High Priority"
+        selected={data.messagePriority === 2}
+        onClick={() => act("set_message_priority", {
+          priority: 2
+        })} />
+      <TextArea
+        height="200px"
+        mb={1}
+        value={data.message}
+        onChange={(e, value) => act("set_message", {
+          message: value
+        })} />
+      <Button.Confirm
+        icon="check"
+        color="good"
+        content="Send Message"
+        onClick={() => act("send_message")} />
     </Section>
   );
 };
@@ -90,7 +112,7 @@ export const DepartmentDropdown = (props, context) => {
           width="75%"
           selected={data.recipientDepartment ? data.recipientDepartment : "Recipient Department..."}
           options={data.assistanceDepartments}
-          onSelected={sel => act("to_department", {
+          onSelected={sel => act("set_message_department", {
             department: sel,
           })} />
       </Stack.Item>
