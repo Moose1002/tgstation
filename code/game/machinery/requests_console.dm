@@ -24,6 +24,16 @@ GLOBAL_LIST_EMPTY(req_console_ckey_departments)
 #define REQ_EMERGENCY_ENGINEERING 2
 #define REQ_EMERGENCY_MEDICAL 3
 
+/datum/request_message
+	var/source
+	var/content
+	var/priority
+
+/datum/request_message/New(source, content, priority)
+	src.source = source
+	src.content = content
+	src.priority = priority
+
 /obj/machinery/requests_console
 	name = "requests console"
 	desc = "A console intended to send requests to different departments on the station."
@@ -241,7 +251,9 @@ GLOBAL_LIST_EMPTY(req_console_ckey_departments)
 				newmessagepriority = REQ_EXTREME_MESSAGE_PRIORITY
 				update_appearance()
 
-	messages += "[header][sending]"
+	var/datum/request_message/RM = new(source, message, priority)
+	//prioritymessages += list("source"=source, "source_department"=source_department, "content"=message, "msgVerified"=msgVerified, "msgStamped"=msgStamped, "priority"= priority, "radio_freq"=radio_freq)
+	messages += RM
 
 	if(!silenced)
 		playsound(src, 'sound/machines/twobeep_high.ogg', 50, TRUE)
@@ -309,6 +321,14 @@ GLOBAL_LIST_EMPTY(req_console_ckey_departments)
 	data["recipientDepartment"] = to_department
 	data["assistanceDepartments"] = GLOB.req_console_assistance
 	data["suppliesDepartments"] = GLOB.req_console_supplies
+
+	data["messages"] = list()
+	for (var/datum/request_message/message in messages)
+		data["messages"] += list(list(
+			"source" = message.source,
+			"content" = message.content,
+			"priority" = message.priority
+		))
 
 	return data
 

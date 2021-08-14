@@ -1,5 +1,5 @@
 import { useBackend, useLocalState } from '../backend';
-import { Box, Button, Dropdown, LabeledList, Section, Stack, Tabs, TextArea } from '../components';
+import { Box, Button, Dropdown, LabeledList, Section, Stack, Tabs, Table, TextArea } from '../components';
 import { Window } from '../layouts';
 
 export const RequestsConsole = (props, context) => {
@@ -44,17 +44,41 @@ export const RequestsConsole = (props, context) => {
 
 export const RequestsConsoleMessages = (props, context) => {
   const { act, data } = useBackend(context);
+  const messages = data.messages || [];
   return (
-    <Section
-      title="Messages"
-      buttons={
-        <Button
-          icon={data.silent ? 'volume-mute' : 'volume-up'}
-          selected={!data.silent}
-          onClick={() => act('silence')}/>
-        }>
-    </Section>
+  <Section
+    title="Messages"
+    buttons={
+      <Button
+        icon={data.silent ? 'volume-mute' : 'volume-up'}
+        selected={!data.silent}
+        onClick={() => act('silence')}/>
+    }>
+    {messages.length === 0 && (
+        <Box color="good">
+          No Messages
+        </Box>
+      )}
+    {messages.length > 0 && (
+      <Table>
+        {messages.map(message => (
+          <Table.Row
+            key={message.source}
+            className="candystripe">
+            <Table.Cell>
+              {message.content}
+            </Table.Cell>
+          </Table.Row>
+        ))}
+      </Table>
+    )}
+  </Section>
   );
+  //Note for tomorrow, need to figure out how to display all messages in a list
+  return data.messages(message => (
+    <Message
+      message={message} />
+  ));
 };
 
 export const RequestsConsoleRequest = (props, context) => {
@@ -117,5 +141,14 @@ export const DepartmentDropdown = (props, context) => {
           })} />
       </Stack.Item>
     </Stack>
+  );
+};
+
+export const Message = (props, context) => {
+  const { act, data } = useBackend(context);
+  return (
+    <Section>
+      {"From: " + data.department + " Received: Random Time"}
+    </Section>
   );
 };
