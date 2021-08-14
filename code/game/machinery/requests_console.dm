@@ -25,14 +25,18 @@ GLOBAL_LIST_EMPTY(req_console_ckey_departments)
 #define REQ_EMERGENCY_MEDICAL 3
 
 /datum/request_message
+	var/id
 	var/source
 	var/content
 	var/priority
+	var/creation_time
 
-/datum/request_message/New(source, content, priority)
+/datum/request_message/New(message_id, source, content, priority, creation_time)
+	src.id = message_id
 	src.source = source
 	src.content = content
 	src.priority = priority
+	src.creation_time = creation_time
 
 /obj/machinery/requests_console
 	name = "requests console"
@@ -251,9 +255,9 @@ GLOBAL_LIST_EMPTY(req_console_ckey_departments)
 				newmessagepriority = REQ_EXTREME_MESSAGE_PRIORITY
 				update_appearance()
 
-	var/datum/request_message/RM = new(source, message, priority)
-	//prioritymessages += list("source"=source, "source_department"=source_department, "content"=message, "msgVerified"=msgVerified, "msgStamped"=msgStamped, "priority"= priority, "radio_freq"=radio_freq)
+	var/datum/request_message/RM = new(length(messages), source, message, priority, station_time_timestamp())
 	messages += RM
+	//prioritymessages += list("source"=source, "source_department"=source_department, "content"=message, "msgVerified"=msgVerified, "msgStamped"=msgStamped, "priority"= priority, "radio_freq"=radio_freq)
 
 	if(!silenced)
 		playsound(src, 'sound/machines/twobeep_high.ogg', 50, TRUE)
@@ -325,7 +329,9 @@ GLOBAL_LIST_EMPTY(req_console_ckey_departments)
 	data["messages"] = list()
 	for (var/datum/request_message/message in messages)
 		data["messages"] += list(list(
+			"id" = message.id,
 			"source" = message.source,
+			"creation_time" = message.creation_time,
 			"content" = message.content,
 			"priority" = message.priority
 		))
@@ -345,6 +351,15 @@ GLOBAL_LIST_EMPTY(req_console_ckey_departments)
 			to_department = params["department"]
 		if("set_message_priority")
 			priority = params["priority"]
+		if("open_message")
+			var/id = text2num(params["id"])
+		if("delete_message")
+			var/id = text2num(params["id"])
+			for(var/datum/request_message/RM in messages)
+				if(RM.id == id)
+					messages -= RM
+					. = TRUE
+					break
 		if("send_message")
 			if(!to_department)
 				return
@@ -380,6 +395,11 @@ GLOBAL_LIST_EMPTY(req_console_ckey_departments)
 			))
 
 			signal.send_to_receivers()
+
+			//Set values back to the defaults
+			to_department = ""
+			priority = 0
+			message = ""
 
 	update_icon()
 

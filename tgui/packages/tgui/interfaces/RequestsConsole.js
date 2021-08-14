@@ -6,8 +6,8 @@ export const RequestsConsole = (props, context) => {
   const [tab, setTab] = useLocalState(context, 'tab', "messages");
   return (
     <Window
-      width={400}
-      height={305}>
+      width={600}
+      height={500}>
       <Window.Content scrollable>
         <Section fitted>
           <Tabs>
@@ -66,7 +66,22 @@ export const RequestsConsoleMessages = (props, context) => {
             key={message.source}
             className="candystripe">
             <Table.Cell>
-              {message.content}
+              From: {message.source}
+            </Table.Cell>
+            <Table.Cell>
+              Received: {message.creation_time}
+            </Table.Cell>
+            <Table.Cell textAlign="right">
+              <Button
+                icon="envelope"
+                onClick={() => act('open_message', {
+                id: message.id,
+              })} />
+              <Button.Confirm
+                icon="trash"
+                onClick={() => act('delete_message', {
+                id: message.id,
+              })} />
             </Table.Cell>
           </Table.Row>
         ))}
@@ -74,11 +89,6 @@ export const RequestsConsoleMessages = (props, context) => {
     )}
   </Section>
   );
-  //Note for tomorrow, need to figure out how to display all messages in a list
-  return data.messages(message => (
-    <Message
-      message={message} />
-  ));
 };
 
 export const RequestsConsoleRequest = (props, context) => {
@@ -87,8 +97,6 @@ export const RequestsConsoleRequest = (props, context) => {
     <Section
       title="Create Request">
       <DepartmentDropdown />
-      <Button
-        content="Low Priority" />
       <Button
         content="Normal Priority"
         selected={data.messagePriority === 1}
@@ -101,6 +109,9 @@ export const RequestsConsoleRequest = (props, context) => {
         onClick={() => act("set_message_priority", {
           priority: 2
         })} />
+      <Button
+        content="Extreme Priority"
+        color="bad"/>
       <TextArea
         height="200px"
         mb={1}
