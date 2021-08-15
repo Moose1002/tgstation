@@ -78,6 +78,7 @@ GLOBAL_LIST_EMPTY(req_console_ckey_departments)
 	var/message = ""
 	var/to_department = "" //the department which will be receiving the message
 	var/priority = REQ_NO_NEW_MESSAGE //Priority of the message being sent
+	var/datum/request_message/active_message
 	var/obj/item/radio/Radio
 	var/emergency //If an emergency has been called by this device. Acts as both a cooldown and lets the responder know where it the emergency was triggered from
 	var/receive_ore_updates = FALSE //If ore redemption machines will send an update when it receives new ores.
@@ -325,6 +326,7 @@ GLOBAL_LIST_EMPTY(req_console_ckey_departments)
 	data["recipientDepartment"] = to_department
 	data["assistanceDepartments"] = GLOB.req_console_assistance
 	data["suppliesDepartments"] = GLOB.req_console_supplies
+	data["activeMessage"] = active_message
 
 	data["messages"] = list()
 	for (var/datum/request_message/message in messages)
@@ -353,13 +355,18 @@ GLOBAL_LIST_EMPTY(req_console_ckey_departments)
 			priority = params["priority"]
 		if("open_message")
 			var/id = text2num(params["id"])
+			for(var/datum/request_message/RM in messages)
+				if(RM.id == id)
+					active_message = RM
+
+			return TRUE
 		if("delete_message")
 			var/id = text2num(params["id"])
 			for(var/datum/request_message/RM in messages)
 				if(RM.id == id)
 					messages -= RM
-					. = TRUE
-					break
+
+			return TRUE
 		if("send_message")
 			if(!to_department)
 				return

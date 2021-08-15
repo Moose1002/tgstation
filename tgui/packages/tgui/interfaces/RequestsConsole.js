@@ -29,7 +29,7 @@ export const RequestsConsole = (props, context) => {
           </Tabs>
           </Section>
           {tab === "messages" && (
-            <RequestsConsoleMessages />
+            <RequestsConsoleMessage />
           )}
           {tab === "request" && (
             <RequestsConsoleRequest />
@@ -42,7 +42,7 @@ export const RequestsConsole = (props, context) => {
   );
 };
 
-export const RequestsConsoleMessages = (props, context) => {
+export const RequestsConsoleMessageList = (props, context) => {
   const { act, data } = useBackend(context);
   const messages = data.messages || [];
   return (
@@ -155,11 +155,18 @@ export const DepartmentDropdown = (props, context) => {
   );
 };
 
-export const Message = (props, context) => {
+export const RequestsConsoleMessage = (props, context) => {
   const { act, data } = useBackend(context);
+  const {
+    activeMessage
+  } = data;
+  if (!activeMessage) {
+    return <RequestsConsoleMessageList />;
+  }
   return (
-    <Section>
-      {"From: " + data.department + " Received: Random Time"}
+    <Section
+      title={"Request From: " + activeMessageSource}>
+      Recieved: Time
     </Section>
   );
 };
