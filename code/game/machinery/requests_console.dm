@@ -317,6 +317,7 @@ GLOBAL_LIST_EMPTY(req_console_ckey_departments)
 		ui = new(user, src, "RequestsConsole", "[department] Requests Console")
 		ui.open()
 
+//Note change these all to snake case (I think is the same?) later
 /obj/machinery/requests_console/ui_data(mob/user)
 	var/list/data = list()
 	data["department"] = department
@@ -326,7 +327,11 @@ GLOBAL_LIST_EMPTY(req_console_ckey_departments)
 	data["recipientDepartment"] = to_department
 	data["assistanceDepartments"] = GLOB.req_console_assistance
 	data["suppliesDepartments"] = GLOB.req_console_supplies
-	data["activeMessage"] = active_message
+
+	if(active_message)
+		data["activeMessage"] = active_message
+		data["activeMessageSource"] = active_message.source
+		data["activeMessageCreationTime"] = active_message.creation_time
 
 	data["messages"] = list()
 	for (var/datum/request_message/message in messages)
