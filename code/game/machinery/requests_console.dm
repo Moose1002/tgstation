@@ -314,6 +314,7 @@ GLOBAL_LIST_EMPTY(req_console_ckey_departments)
 		ui = new(user, src, "RequestsConsole", "[department] Requests Console")
 		ui.open()
 
+//Note change these all to snake case (I think is the same?) later
 /obj/machinery/requests_console/ui_data(mob/user)
 	var/list/data = list()
 	data["department"] = department
