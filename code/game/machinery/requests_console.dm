@@ -74,7 +74,7 @@ GLOBAL_LIST_EMPTY(req_console_ckey_departments)
 	var/open = FALSE // TRUE if open
 	var/announceAuth = FALSE //Will be set to 1 when you authenticate yourself for announcements
 	var/msgVerified = "" //Will contain the name of the person who verified it
-	var/msgStamped = "" //If a message is stamped, this will contain the stamp name
+	var/obj/item/stamp/msgStamped //If a message is stamped, this will contain the stamp name
 	var/message = ""
 	var/to_department = "" //the department which will be receiving the message
 	var/priority = REQ_NO_NEW_MESSAGE //Priority of the message being sent
@@ -292,9 +292,8 @@ GLOBAL_LIST_EMPTY(req_console_ckey_departments)
 
 	var/obj/item/card/id/ID = O.GetID()
 	if(ID)
-		if(screen == REQ_SCREEN_AUTHENTICATE)
-			msgVerified = "<font color='green'><b>Verified by [ID.registered_name] ([ID.assignment])</b></font>"
-			updateUsrDialog()
+		msgVerified = ID
+		to_chat(user, span_notice("You scan the ID card into the console."))
 		if(screen == REQ_SCREEN_ANNOUNCE)
 			if (ACCESS_RC_ANNOUNCE in ID.access)
 				announceAuth = TRUE
@@ -304,11 +303,9 @@ GLOBAL_LIST_EMPTY(req_console_ckey_departments)
 			updateUsrDialog()
 		return
 	if (istype(O, /obj/item/stamp))
-		if(screen == REQ_SCREEN_AUTHENTICATE)
-			var/obj/item/stamp/T = O
-			msgStamped = span_boldnotice("Stamped with the [T.name]")
-			updateUsrDialog()
-		return
+		var/obj/item/stamp/message_stamp = O
+		msgStamped = message_stamp
+		to_chat(user, span_warning("You scan the [message_stamp.name] into the console."))
 	return ..()
 
 /obj/machinery/requests_console/ui_interact(mob/user, datum/tgui/ui)
@@ -322,11 +319,20 @@ GLOBAL_LIST_EMPTY(req_console_ckey_departments)
 	data["department"] = department
 	data["silent"] = silent
 	data["message"] = message
-	data["messagePriority"] = priority
-	data["recipientDepartment"] = to_department
-	data["assistanceDepartments"] = GLOB.req_console_assistance
-	data["suppliesDepartments"] = GLOB.req_console_supplies
-	data["activeMessage"] = active_message
+	data["message_priority"] = priority
+	data["recipient_department"] = to_department
+	data["active_message"] = active_message
+
+	if(msgStamped)
+		var/datum/asset/spritesheet/sheet = get_asset_datum(/datum/asset/spritesheet/simple/paper)
+		data["stamp_icon_state"] = msgStamped.icon_state
+		data["stamp_class"] = sheet.icon_class_name(msgStamped.icon_state)
+		data["stamp_test"] = "large_stamp-ce.png"
+
+	if(active_message)
+		data["active_message_id"] = active_message.id
+		data["active_message_source"] = active_message.source
+		data["active_message_creation_time"] = active_message.creation_time
 
 	data["messages"] = list()
 	for (var/datum/request_message/message in messages)
@@ -340,6 +346,13 @@ GLOBAL_LIST_EMPTY(req_console_ckey_departments)
 
 	return data
 
+/obj/machinery/requests_console/ui_static_data(mob/user)
+	var/list/data = list()
+	data["assistance_departments"] = GLOB.req_console_assistance
+	data["supplies_departments"] = GLOB.req_console_supplies
+
+	return data
+
 /obj/machinery/requests_console/ui_act(action, list/params)
 	. = ..()
 	if(.)
@@ -347,12 +360,19 @@ GLOBAL_LIST_EMPTY(req_console_ckey_departments)
 	switch(action)
 		if("silence")
 			silent = !silent
+			return TRUE
 		if("set_message")
 			message = params["message"]
+			return TRUE
 		if("set_message_department")
 			to_department = params["department"]
+			return TRUE
 		if("set_message_priority")
 			priority = params["priority"]
+			return TRUE
+		if("exit_message")
+			active_message = null
+			return TRUE
 		if("open_message")
 			var/id = text2num(params["id"])
 			for(var/datum/request_message/RM in messages)
@@ -365,6 +385,7 @@ GLOBAL_LIST_EMPTY(req_console_ckey_departments)
 			for(var/datum/request_message/RM in messages)
 				if(RM.id == id)
 					messages -= RM
+					active_message = null
 
 			return TRUE
 		if("send_message")
@@ -409,6 +430,7 @@ GLOBAL_LIST_EMPTY(req_console_ckey_departments)
 			message = ""
 
 	update_icon()
+
 
 #undef REQ_EMERGENCY_SECURITY
 #undef REQ_EMERGENCY_ENGINEERING
