@@ -26,9 +26,14 @@
 
 /** Returns a new bounty of random type, but does not add it to GLOB.bounties_list.
  *
- * *Guided determines what specific catagory of bounty should be chosen.
+ * Arguments:
+ * * guided - determines what specific catagory of bounty should be chosen.
+ * * departmental - if the bounty was created from a department id account
  */
-/proc/random_bounty(guided = 0)
+/proc/random_bounty(guided = 0, departmental = FALSE)
+
+	if(departmental)
+
 	var/bounty_num
 	if(guided && (guided != CIV_JOB_RANDOM))
 		bounty_num = guided

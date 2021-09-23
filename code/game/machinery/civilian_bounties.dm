@@ -119,14 +119,18 @@
 		var/curr_time = round(((pot_acc.bounty_timer + (5 MINUTES))-world.time)/ (1 MINUTES), 0.01)
 		to_chat(usr, span_warning("Internal ID network spools coiling, try again in [curr_time] minutes!"))
 		return FALSE
-	if(!pot_acc.account_job)
+	if(!pot_acc.account_job && !pot_acc.department_ID))
 		to_chat(usr, span_warning("The console smartly rejects your ID card, as it lacks a job assignment!"))
 		return FALSE
-	var/list/datum/bounty/crumbs = list(random_bounty(pot_acc.account_job.bounty_types), // We want to offer 2 bounties from their appropriate job catagories
-										random_bounty(pot_acc.account_job.bounty_types), // and 1 guarenteed assistant bounty if the other 2 suck.
-										random_bounty(CIV_JOB_BASIC))
-	pot_acc.bounty_timer = world.time
-	pot_acc.bounties = crumbs
+	if(pot_acc.department_ID)
+		var/list/datum/bounty/department_bounties = list(random_bounty(),
+													  	random_bounty())
+	else
+		var/list/datum/bounty/crumbs = list(random_bounty(pot_acc.account_job.bounty_types), // We want to offer 2 bounties from their appropriate job catagories
+											random_bounty(pot_acc.account_job.bounty_types), // and 1 guarenteed assistant bounty if the other 2 suck.
+											random_bounty(CIV_JOB_BASIC))
+		pot_acc.bounty_timer = world.time
+		pot_acc.bounties = crumbs
 
 /obj/machinery/computer/piratepad_control/civilian/proc/pick_bounty(choice)
 	if(!inserted_scan_id || !inserted_scan_id.registered_account || !inserted_scan_id.registered_account.bounties || !inserted_scan_id.registered_account.bounties[choice])
