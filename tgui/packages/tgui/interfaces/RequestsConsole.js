@@ -164,27 +164,33 @@ export const RequestsConsoleMessage = (props, context) => {
     active_message_id,
     active_message_source,
     active_message_creation_time,
+    active_message_content,
   } = data;
   if (!active_message) {
     return <RequestsConsoleMessageList />;
   }
   return (
-    <Section
-      title={"Request From: " + active_message_source}
-      buttons={
-        <>
-          <Button
-            icon="arrow-left"
-            content="Back"
-            onClick={() => act("exit_message")} />
-          <Button.Confirm
-            icon="trash"
-            onClick={() => act('delete_message', {
-              id: active_message_id,
-            })} />
-        </>
-      }>
-      Recieved: {active_message_creation_time}
-    </Section>
+    <>
+      <Section
+        title={"Request From: " + active_message_source}
+        buttons={
+          <>
+            <Button
+              icon="arrow-left"
+              content="Back"
+              onClick={() => act("exit_message")} />
+            <Button.Confirm
+              icon="trash"
+              onClick={() => act('delete_message', {
+                id: active_message_id,
+              })} />
+          </>
+        }>
+        Recieved: {active_message_creation_time}
+      </Section>
+      <Section title="Message">
+        {active_message_content}
+      </Section>
+    </>
   );
 };

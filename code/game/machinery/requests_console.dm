@@ -334,6 +334,7 @@ GLOBAL_LIST_EMPTY(req_console_ckey_departments)
 		data["active_message_id"] = active_message.id
 		data["active_message_source"] = active_message.source
 		data["active_message_creation_time"] = active_message.creation_time
+		data["active_message_content"] = active_message.content
 
 	data["messages"] = list()
 	for (var/datum/request_message/message in messages)
