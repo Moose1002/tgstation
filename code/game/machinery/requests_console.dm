@@ -30,13 +30,17 @@ GLOBAL_LIST_EMPTY(req_console_ckey_departments)
 	var/content
 	var/priority
 	var/creation_time
+	var/msg_verified
+	var/msg_stamped
 
-/datum/request_message/New(message_id, source, content, priority, creation_time)
+/datum/request_message/New(message_id, source, content, priority, creation_time, msg_verified, msg_stamped)
 	src.id = message_id
 	src.source = source
 	src.content = content
 	src.priority = priority
 	src.creation_time = creation_time
+	src.msg_verified = msg_verified
+	src.msg_stamped = msg_stamped
 
 /obj/machinery/requests_console
 	name = "requests console"
@@ -256,8 +260,9 @@ GLOBAL_LIST_EMPTY(req_console_ckey_departments)
 				newmessagepriority = REQ_EXTREME_MESSAGE_PRIORITY
 				update_appearance()
 
-	var/datum/request_message/RM = new(length(messages), source, message, priority, station_time_timestamp())
+	var/datum/request_message/RM = new(length(messages), source, message, priority, station_time_timestamp(), msgVerified, msgStamped)
 	messages += RM
+
 	//prioritymessages += list("source"=source, "source_department"=source_department, "content"=message, "msgVerified"=msgVerified, "msgStamped"=msgStamped, "priority"= priority, "radio_freq"=radio_freq)
 
 	if(!silenced)
@@ -314,7 +319,6 @@ GLOBAL_LIST_EMPTY(req_console_ckey_departments)
 		ui = new(user, src, "RequestsConsole", "[department] Requests Console")
 		ui.open()
 
-//Note change these all to snake case (I think is the same?) later
 /obj/machinery/requests_console/ui_data(mob/user)
 	var/list/data = list()
 	data["department"] = department
@@ -324,20 +328,23 @@ GLOBAL_LIST_EMPTY(req_console_ckey_departments)
 	data["recipient_department"] = to_department
 	data["active_message"] = active_message
 
+	if(msgVerified)
+		data["message_verification"] = msgVerified
+
 	if(msgStamped)
-		var/datum/asset/spritesheet/sheet = get_asset_datum(/datum/asset/spritesheet/simple/paper)
-		data["stamp_icon_state"] = msgStamped.icon_state
-		data["stamp_class"] = sheet.icon_class_name(msgStamped.icon_state)
-		data["stamp_test"] = "large_stamp-ce.png"
+		data["message_stamped"] = msgStamped
 
 	if(active_message)
 		data["active_message_id"] = active_message.id
 		data["active_message_source"] = active_message.source
 		data["active_message_creation_time"] = active_message.creation_time
 		data["active_message_content"] = active_message.content
+		data["active_message_verified"] = active_message.msg_verified
+		data["active_message_stamped"] = active_message.msg_stamped
 
 	data["messages"] = list()
-	for (var/datum/request_message/message in messages)
+	for (var/message_index = messages.len to 1 step -1) //Sort by the most recently sent message
+		var/datum/request_message/message = messages[message_index]
 		data["messages"] += list(list(
 			"id" = message.id,
 			"source" = message.source,
@@ -427,9 +434,11 @@ GLOBAL_LIST_EMPTY(req_console_ckey_departments)
 			signal.send_to_receivers()
 
 			//Set values back to the defaults
-			to_department = ""
+			//to_department = ""
 			priority = 0
 			message = ""
+			msgVerified = ""
+			msgStamped = null
 
 	update_icon()
 

@@ -93,19 +93,25 @@ export const RequestsConsoleMessageList = (props, context) => {
 
 export const RequestsConsoleRequest = (props, context) => {
   const { act, data } = useBackend(context);
+  const {
+    message,
+    message_priority,
+    message_verification,
+    message_stamped,
+  } = data;
   return (
     <Section
       title="Create Request">
       <DepartmentDropdown />
       <Button
         content="Normal Priority"
-        selected={data.message_priority === 1}
+        selected={message_priority === 1}
         onClick={() => act("set_message_priority", {
           priority: 1,
         })} />
       <Button
         content="High Priority"
-        selected={data.message_priority === 2}
+        selected={message_priority === 2}
         onClick={() => act("set_message_priority", {
           priority: 2,
         })} />
@@ -115,13 +121,19 @@ export const RequestsConsoleRequest = (props, context) => {
       <TextArea
         height="200px"
         mb={1}
-        value={data.message}
+        value={message}
         onChange={(e, value) => act("set_message", {
           message: value,
         })} />
-      <Box>
-        <img src={resolveAsset(data.stamp_test)} />
-      </Box>
+      <LabeledList>
+        <LabeledList.Item label="Verified by">
+          {message_verification ? message_verification : "Unverified"}
+        </LabeledList.Item>
+        <LabeledList.Item label="Stamped by">
+          {message_stamped ? message_stamped : "Unstamped"}
+        </LabeledList.Item>
+      </LabeledList>
+      <Box mt={1} />
       <Button.Confirm
         icon="check"
         color="good"
@@ -165,6 +177,8 @@ export const RequestsConsoleMessage = (props, context) => {
     active_message_source,
     active_message_creation_time,
     active_message_content,
+    active_message_verified,
+    active_message_stamped,
   } = data;
   if (!active_message) {
     return <RequestsConsoleMessageList />;
@@ -186,10 +200,23 @@ export const RequestsConsoleMessage = (props, context) => {
               })} />
           </>
         }>
-        Recieved: {active_message_creation_time}
-      </Section>
-      <Section title="Message">
-        {active_message_content}
+        <LabeledList>
+          <LabeledList.Item label="Received">
+            {active_message_creation_time}
+          </LabeledList.Item>
+          <LabeledList.Item label="From">
+            {active_message_source}
+          </LabeledList.Item>
+          <LabeledList.Item label="Verified by">
+            {active_message_verified ? active_message_verified : "Unverified"}
+          </LabeledList.Item>
+          <LabeledList.Item label="Stamped by">
+            {active_message_stamped ? active_message_stamped : "Unstamped"}
+          </LabeledList.Item>
+          <LabeledList.Item label="Message">
+            {active_message_content}
+          </LabeledList.Item>
+        </LabeledList>
       </Section>
     </>
   );
