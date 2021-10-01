@@ -4,7 +4,11 @@ import { Box, Button, Dropdown, LabeledList, Section, Stack, Tabs, Table, TextAr
 import { Window } from '../layouts';
 
 export const RequestsConsole = (props, context) => {
+  const { act, data } = useBackend(context);
   const [tab, setTab] = useLocalState(context, 'tab', "messages");
+  const {
+    announcement_console,
+  } = data;
   return (
     <Window
       width={600}
@@ -27,6 +31,13 @@ export const RequestsConsole = (props, context) => {
               onClick={() => setTab("emergency")}>
               Emergencies
             </Tabs.Tab>
+            {announcement_console === true && (
+              <Tabs.Tab
+                selected={tab === "announce"}
+                onClick={() => setTab("announce")}>
+                Announce
+              </Tabs.Tab>
+            )}
           </Tabs>
         </Section>
         {tab === "messages" && (
@@ -37,6 +48,9 @@ export const RequestsConsole = (props, context) => {
         )}
         {tab === "emergency" && (
           <RequestsConsoleEmergencies />
+        )}
+        {tab === "announce" && (
+          <RequestsConsoleAnnouncements />
         )}
       </Window.Content>
     </Window>

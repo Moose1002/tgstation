@@ -359,6 +359,7 @@ GLOBAL_LIST_EMPTY(req_console_ckey_departments)
 	var/list/data = list()
 	data["assistance_departments"] = GLOB.req_console_assistance
 	data["supplies_departments"] = GLOB.req_console_supplies
+	data["announcement_console"] = announcementConsole
 
 	return data
 
