@@ -56,6 +56,7 @@ GLOBAL_LIST_EMPTY(conveyors_by_id)
 	if(newid)
 		id = newid
 	update_move_direction()
+	auto_connect()
 	LAZYADD(GLOB.conveyors_by_id[id], src)
 
 /obj/machinery/conveyor/Destroy()
@@ -110,6 +111,32 @@ GLOBAL_LIST_EMPTY(conveyors_by_id)
 	else
 		movedir = backwards
 	update()
+
+/obj/machinery/conveyor/proc/auto_connect()
+	for(var/obj/machinery/conveyor/conveyor_target in orange(1, src))
+		if(conveyor_target.dir == src.dir)
+			return
+		switch(src.dir)
+			if(NORTH)
+				if(conveyor_target.dir == EAST)
+					setDir(NORTHEAST)
+				if(conveyor_target == WEST)
+					setDir(NORTHWEST)
+			if(SOUTH)
+				if(conveyor_target.dir == EAST)
+					setDir(SOUTHEAST)
+				if(conveyor_target == WEST)
+					setDir(SOUTHWEST)
+			if(EAST)
+				if(conveyor_target.dir == NORTH)
+					setDir(NORTHEAST)
+				if(conveyor_target == SOUTH)
+					setDir(SOUTHEAST)
+			if(WEST)
+				if(conveyor_target.dir == NORTH)
+					setDir(NORTHWEST)
+				if(conveyor_target == SOUTH)
+					setDir(SOUTHWEST)
 
 /obj/machinery/conveyor/update_icon_state()
 	icon_state = "[base_icon_state][(machine_stat & BROKEN) ? "-broken" : (operating * verted)]"
