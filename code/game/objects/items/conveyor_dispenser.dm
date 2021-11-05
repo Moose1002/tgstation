@@ -39,7 +39,7 @@
 		if(WEST)
 			direction_text = "west"
 
-	balloon_alert(user, "facing [direction_text] // [conveyor_direction]")
+	balloon_alert(user, "facing [direction_text]")
 
 /obj/item/conveyor_dispenser/attackby(obj/item/attacking_item, mob/user)
 	if(insert_matter(attacking_item, user))
