@@ -5,18 +5,18 @@
 /obj/item/stack/tile/mineral/attackby(obj/item/W, mob/user, params)
 	if(W.tool_behaviour == TOOL_WELDER)
 		if(get_amount() < 4)
-			to_chat(user, "<span class='warning'>You need at least four tiles to do this!</span>")
+			to_chat(user, span_warning("You need at least four tiles to do this!"))
 			return
 		if(!mineralType)
-			to_chat(user, "<span class='warning'>You can not reform this!</span>")
+			to_chat(user, span_warning("You can not reform this!"))
 			stack_trace("A mineral tile of type [type] doesn't have its' mineralType set.")
 			return
 		if(W.use_tool(src, user, 0, volume=40))
 			var/sheet_type = text2path("/obj/item/stack/sheet/mineral/[mineralType]")
 			var/obj/item/stack/sheet/mineral/new_item = new sheet_type(user.loc)
-			user.visible_message("<span class='notice'>[user] shaped [src] into [new_item] with [W].</span>", \
-				"<span class='notice'>You shaped [src] into [new_item] with [W].</span>", \
-				"<span class='hear'>You hear welding.</span>")
+			user.visible_message(span_notice("[user] shaped [src] into [new_item] with [W]."), \
+				span_notice("You shaped [src] into [new_item] with [W]."), \
+				span_hear("You hear welding."))
 			var/holding = user.is_holding(src)
 			use(4)
 			if(holding && QDELETED(src))
@@ -34,19 +34,6 @@
 	mineralType = "plasma"
 	mats_per_unit = list(/datum/material/plasma=MINERAL_MATERIAL_AMOUNT*0.25)
 	merge_type = /obj/item/stack/tile/mineral/plasma
-
-/obj/item/stack/tile/mineral/plasma/attackby(obj/item/W, mob/user, params)
-	if(W.get_temperature() > 300)//If the temperature of the object is over 300, then ignite
-		var/turf/T = get_turf(src)
-		message_admins("Plasma tiles ignited by [ADMIN_LOOKUPFLW(user)] in [ADMIN_VERBOSEJMP(T)]")
-		log_game("Plasma tiles ignited by [key_name(user)] in [AREACOORD(T)]")
-		fire_act(W.get_temperature())
-	else
-		return ..()
-
-/obj/item/stack/tile/mineral/plasma/fire_act(exposed_temperature, exposed_volume)
-	atmos_spawn_air("plasma=[amount*2.5];TEMP=[exposed_temperature]")
-	qdel(src)
 
 /obj/item/stack/tile/mineral/uranium
 	name = "uranium tile"
@@ -95,12 +82,13 @@
 /obj/item/stack/tile/mineral/bananium
 	name = "bananium tile"
 	singular_name = "bananium floor tile"
-	desc = "A tile made out of bananium, HOOOOOOOOONK!"
+	desc = "A non-slippery tile made out of bananium, HOOOOOOOOONK!"
 	icon_state = "tile_bananium"
 	inhand_icon_state = "tile-bananium"
 	turf_type = /turf/open/floor/mineral/bananium
 	mineralType = "bananium"
 	mats_per_unit = list(/datum/material/bananium=MINERAL_MATERIAL_AMOUNT*0.25)
+	material_flags = NONE //The slippery comp makes it unpractical for good clown decor. The material tiles should still slip.
 	merge_type = /obj/item/stack/tile/mineral/bananium
 
 /obj/item/stack/tile/mineral/abductor
@@ -239,6 +227,6 @@
 	desc = "A layer of snow."
 	icon_state = "tile_snow"
 	inhand_icon_state = "tile-silver"
-	turf_type = /turf/open/floor/grass/snow/safe
+	turf_type = /turf/open/floor/fake_snow
 	mineralType = "snow"
 	merge_type = /obj/item/stack/tile/mineral/snow

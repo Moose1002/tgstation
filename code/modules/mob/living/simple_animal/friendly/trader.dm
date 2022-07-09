@@ -18,8 +18,8 @@
 	attack_verb_simple = "punch"
 	attack_sound = 'sound/weapons/punch1.ogg'
 	del_on_death = TRUE
-	loot = list(/obj/effect/mob_spawn/human/corpse)
-	atmos_requirements = list("min_oxy" = 5, "max_oxy" = 0, "min_tox" = 0, "max_tox" = 1, "min_co2" = 0, "max_co2" = 5, "min_n2" = 0, "max_n2" = 0)
+	loot = list(/obj/effect/mob_spawn/corpse/human)
+	atmos_requirements = list("min_oxy" = 5, "max_oxy" = 0, "min_plas" = 0, "max_plas" = 1, "min_co2" = 0, "max_co2" = 5, "min_n2" = 0, "max_n2" = 0)
 	unsuitable_atmos_damage = 2.5
 	casingtype = /obj/item/ammo_casing/shotgun/buckshot
 	wander = FALSE
@@ -142,7 +142,7 @@
  */
 /mob/living/simple_animal/hostile/retaliate/trader/proc/try_buy(mob/user, obj/item/item_to_buy)
 	var/cost = products[item_to_buy]
-	to_chat(user, "<span class='notice'>It will cost you [cost] credits to buy \the [initial(item_to_buy.name)]. Are you sure you want to buy it?</span>")
+	to_chat(user, span_notice("It will cost you [cost] credits to buy \the [initial(item_to_buy.name)]. Are you sure you want to buy it?"))
 	var/list/npc_options = list(
 		"Yes" = image(icon = 'icons/hud/radial.dmi', icon_state = "radial_yes"),
 		"No" = image(icon = 'icons/hud/radial.dmi', icon_state = "radial_no")
@@ -183,7 +183,7 @@
 	if(!cost)
 		return FALSE
 	say(interestedphrase)
-	to_chat(user, "<span class='notice'>You will receive [cost] credits for each one of [sellitem].</span>")
+	to_chat(user, span_notice("You will receive [cost] credits for each one of [sellitem]."))
 	var/list/npc_options = list(
 		"Yes" = image(icon = 'icons/hud/radial.dmi', icon_state = "radial_yes"),
 		"No" = image(icon = 'icons/hud/radial.dmi', icon_state = "radial_no")
@@ -225,7 +225,7 @@
 	mob_biotypes = MOB_UNDEAD|MOB_HUMANOID
 	products = list(
 		/obj/item/clothing/head/helmet/skull = 150,
-		/obj/item/clothing/mask/bandana/skull = 50,
+		/obj/item/clothing/mask/bandana/skull/black = 50,
 		/obj/item/food/cookie/sugar/spookyskull = 10,
 		/obj/item/instrument/trombone/spectral = 10000,
 		/obj/item/shovel/serrated = 150

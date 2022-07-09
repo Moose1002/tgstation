@@ -29,7 +29,7 @@
 
 	uses -= 1
 	if(!uses)
-		visible_message("<span class='warning'>[src] vanishes, its magic completely consumed from the fortification.</span>")
+		visible_message(span_warning("[src] vanishes, its magic completely consumed from the fortification."))
 		qdel(src)
 
 /obj/item/upgradescroll/unlimited
@@ -64,6 +64,8 @@ GLOBAL_DATUM(rpgloot_controller, /datum/rpgloot_controller)
 
 ///signal sent by a new item being created.
 /datum/rpgloot_controller/proc/on_new_item_in_existence(datum/source, obj/item/created_item)
+	SIGNAL_HANDLER
+
 	created_item.AddComponent(/datum/component/fantasy)
 
 /**
@@ -84,10 +86,10 @@ GLOBAL_DATUM(rpgloot_controller, /datum/rpgloot_controller)
 
 		if(istype(fantasy_item, /obj/item/storage))
 			var/obj/item/storage/storage_item = fantasy_item
-			var/datum/component/storage/storage_component = storage_item.GetComponent(/datum/component/storage)
-			if(prob(upgrade_scroll_chance) && storage_item.contents.len < storage_component.max_items && !storage_item.invisibility)
+			var/datum/storage/storage_component = storage_item.atom_storage
+			if(prob(upgrade_scroll_chance) && storage_item.contents.len < storage_component.max_slots && !storage_item.invisibility)
 				var/obj/item/upgradescroll/scroll = new(get_turf(storage_item))
-				SEND_SIGNAL(storage_item, COMSIG_TRY_STORAGE_INSERT, scroll, null, TRUE, TRUE)
+				storage_item.atom_storage?.attempt_insert(storage_item, scroll, null, TRUE)
 				upgrade_scroll_chance = max(0,upgrade_scroll_chance-100)
 				if(isturf(scroll.loc))
 					qdel(scroll)

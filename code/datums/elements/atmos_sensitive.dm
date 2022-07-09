@@ -10,7 +10,7 @@
 	if(!isatom(target)) //How
 		return ELEMENT_INCOMPATIBLE
 	var/atom/to_track = target
-	to_track.AddElement(/datum/element/connect_loc, to_track, pass_on)
+	to_track.AddElement(/datum/element/connect_loc, pass_on)
 	RegisterSignal(to_track, COMSIG_MOVABLE_MOVED, .proc/react_to_move)
 
 	if(!mapload && isopenturf(to_track.loc))
@@ -22,6 +22,7 @@
 /datum/element/atmos_sensitive/Detach(datum/source)
 	var/atom/us = source
 	us.RemoveElement(/datum/element/connect_loc, pass_on)
+	UnregisterSignal(source, COMSIG_MOVABLE_MOVED)
 	if(us.flags_1 & ATMOS_IS_PROCESSING_1)
 		us.atmos_end()
 		SSair.atom_process -= us

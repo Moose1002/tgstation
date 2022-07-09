@@ -61,44 +61,44 @@
 	//send a message and handle rewards
 	switch(burden_level)
 		if(0)
-			to_chat(owner, "<span class='warning'>You feel no weight on your shoulders. You are not feeling [GLOB.deity]'s suffering.</span>")
+			to_chat(owner, span_warning("You feel no weight on your shoulders. You are not feeling [GLOB.deity]'s suffering."))
 		if(1)
 			if(increase)
-				to_chat(owner, "<span class='notice'>You begin to feel the scars on [GLOB.deity]. You must continue to burden yourself.</span>")
+				to_chat(owner, span_notice("You begin to feel the scars on [GLOB.deity]. You must continue to burden yourself."))
 			else
-				to_chat(owner, "<span class='warning'>The weight on your shoulders feels lighter. You are barely feeling [GLOB.deity]'s suffering.</span>")
+				to_chat(owner, span_warning("The weight on your shoulders feels lighter. You are barely feeling [GLOB.deity]'s suffering."))
 		if(2)
 			if(increase)
-				to_chat(owner, "<span class='notice'>You have done well to understand [GLOB.deity]. You are almost at a breakthrough.</span>")
+				to_chat(owner, span_notice("You have done well to understand [GLOB.deity]. You are almost at a breakthrough."))
 			else
-				to_chat(owner, "<span class='warning'>The weight on your shoulders feels lighter. You have lost some universal truths.</span>")
-				dna.remove_mutation(TELEPATHY)
-				dna.remove_mutation(MUT_MUTE)
+				to_chat(owner, span_warning("The weight on your shoulders feels lighter. You have lost some universal truths."))
+				dna.remove_mutation(/datum/mutation/human/telepathy)
+				dna.remove_mutation(/datum/mutation/human/mute)
 				owner.remove_filter("burden_outline")
 		if(3)
 			if(increase)
-				to_chat(owner, "<span class='notice'>Your suffering is only a fraction of [GLOB.deity]'s, and yet the universal truths are coming to you.</span>")
-				dna.add_mutation(TELEPATHY)
-				dna.add_mutation(MUT_MUTE)
+				to_chat(owner, span_notice("Your suffering is only a fraction of [GLOB.deity]'s, and yet the universal truths are coming to you."))
+				dna.add_mutation(/datum/mutation/human/telepathy)
+				dna.add_mutation(/datum/mutation/human/mute)
 				owner.add_filter("burden_outline", 9, list("type" = "outline", "color" = "#6c6eff"))
 			else
-				to_chat(owner, "<span class='warning'>The weight on your shoulders feels lighter. You feel like you're about to forget.</span>")
+				to_chat(owner, span_warning("The weight on your shoulders feels lighter. You feel like you're about to forget."))
 		if(4)
 			if(increase)
-				to_chat(owner, "<span class='notice'>The weight on your shoulders is immense. [GLOB.deity] is shattered across the cosmos.</span>")
+				to_chat(owner, span_notice("The weight on your shoulders is immense. [GLOB.deity] is shattered across the cosmos."))
 			else
-				to_chat(owner, "<span class='warning'>The weight on your shoulders feels lighter. You're growing further from your goal.</span>")
+				to_chat(owner, span_warning("The weight on your shoulders feels lighter. You're growing further from your goal."))
 		if(5)
 			if(increase)
-				to_chat(owner, "<span class='notice'>You're on the cusp of another breakthrough. [GLOB.deity] lost everything.</span>")
+				to_chat(owner, span_notice("You're on the cusp of another breakthrough. [GLOB.deity] lost everything."))
 			else
-				to_chat(owner, "<span class='warning'>The weight on your shoulders feels lighter. You have lost some universal truths.</span>")
-				dna.remove_mutation(TK)
-				dna.remove_mutation(MINDREAD)
+				to_chat(owner, span_warning("The weight on your shoulders feels lighter. You have lost some universal truths."))
+				dna.remove_mutation(/datum/mutation/human/telekinesis)
+				dna.remove_mutation(/datum/mutation/human/mindreader)
 		if(6)
-			to_chat(owner, "<span class='notice'>You have finally broken yourself enough to understand [GLOB.deity]. It's all so clear to you.</span>")
-			dna.add_mutation(TK)
-			dna.add_mutation(MINDREAD)
+			to_chat(owner, span_notice("You have finally broken yourself enough to understand [GLOB.deity]. It's all so clear to you."))
+			dna.add_mutation(/datum/mutation/human/telekinesis)
+			dna.add_mutation(/datum/mutation/human/mindreader)
 
 /// Signal to decrease burden_level (see update_burden proc) if an organ is added
 /datum/mutation/human/burdened/proc/organ_added_burden(mob/burdened, obj/item/organ/new_organ, special)
@@ -107,8 +107,8 @@
 	if(special) //aheals
 		return
 
-	if(istype(new_organ, /obj/item/organ/eyes))
-		var/obj/item/organ/eyes/new_eyes = new_organ
+	if(istype(new_organ, /obj/item/organ/internal/eyes))
+		var/obj/item/organ/internal/eyes/new_eyes = new_organ
 		if(new_eyes.tint < TINT_BLIND) //unless you added unworking eyes (flashlight eyes), this is removing burden
 			update_burden(FALSE)
 		return
@@ -121,8 +121,8 @@
 	if(special) //aheals
 		return
 
-	if(istype(old_organ, /obj/item/organ/eyes))
-		var/obj/item/organ/eyes/old_eyes = old_organ
+	if(istype(old_organ, /obj/item/organ/internal/eyes))
+		var/obj/item/organ/internal/eyes/old_eyes = old_organ
 		if(old_eyes.tint < TINT_BLIND) //unless you were already blinded by them (flashlight eyes), this is adding burden!
 			update_burden(TRUE)
 

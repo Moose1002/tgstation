@@ -52,9 +52,9 @@
 		return
 
 	food.visible_message(
-		"<span class='danger'>Something dark in [eater] lashes out at [food] and [food.p_their()] light goes out in an instant!</span>",
-		"<span class='userdanger'>You feel something dark in [eater] lash out and gnaw through your light in an instant! It recedes just as fast, but you can feel that [eater.p_theyve()] left something hungry behind.</span>",
-		"<span class='danger'>You feel a gnawing pulse eat at your sight.</span>"
+		span_danger("Something dark in [eater] lashes out at [food] and [food.p_their()] light goes out in an instant!"),
+		span_userdanger("You feel something dark in [eater] lash out and gnaw through your light in an instant! It recedes just as fast, but you can feel that [eater.p_theyve()] left something hungry behind."),
+		span_danger("You feel a gnawing pulse eat at your sight.")
 	)
 
 /**
@@ -67,8 +67,7 @@
 /datum/element/light_eater/proc/table_buffet(atom/commisary, datum/devourer)
 	. = list()
 	SEND_SIGNAL(commisary, COMSIG_LIGHT_EATER_QUEUE, ., devourer)
-	for(var/nom in commisary.light_sources)
-		var/datum/light_source/morsel = nom
+	for(var/datum/light_source/morsel as anything in commisary.light_sources)
 		.[morsel.source_atom] = TRUE
 
 /**

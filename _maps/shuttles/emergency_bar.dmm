@@ -6,7 +6,7 @@
 /turf/closed/wall/mineral/titanium,
 /area/shuttle/escape)
 "ac" = (
-/obj/effect/spawner/structure/window/shuttle,
+/obj/effect/spawner/structure/window/reinforced/shuttle,
 /turf/open/floor/plating,
 /area/shuttle/escape)
 "ad" = (
@@ -127,9 +127,9 @@
 /area/shuttle/escape)
 "az" = (
 /obj/machinery/door/airlock/public/glass{
-	name = "Emergency Shuttle Cockpit";
-	req_access_txt = "19"
+	name = "Emergency Shuttle Cockpit"
 	},
+/obj/effect/mapping_helpers/airlock/access/all/command/general,
 /turf/open/floor/carpet,
 /area/shuttle/escape)
 "aC" = (
@@ -160,13 +160,11 @@
 /turf/open/floor/iron,
 /area/shuttle/escape)
 "aF" = (
-/obj/structure/musician/piano{
-	icon_state = "piano"
-	},
+/obj/structure/musician/piano,
 /turf/open/floor/iron/grimy,
 /area/shuttle/escape)
 "aG" = (
-/obj/structure/chair/stool{
+/obj/structure/chair/stool/directional/west{
 	can_buckle = 1
 	},
 /turf/open/floor/iron/grimy,
@@ -188,20 +186,20 @@
 /area/shuttle/escape/brig)
 "aJ" = (
 /obj/machinery/door/airlock/public/glass{
-	name = "Emergency Shuttle Brig";
-	req_access_txt = "2"
+	name = "Emergency Shuttle Brig"
 	},
 /obj/effect/turf_decal/tile/bar,
 /obj/effect/turf_decal/tile/bar{
 	dir = 1
 	},
+/obj/effect/mapping_helpers/airlock/access/all/security/general,
 /turf/open/floor/iron,
 /area/shuttle/escape/brig)
 "aK" = (
 /obj/machinery/door/airlock/titanium{
-	name = "Emergency Shuttle Airlock";
-	req_access_txt = "2"
+	name = "Emergency Shuttle Airlock"
 	},
+/obj/effect/mapping_helpers/airlock/access/all/security/general,
 /turf/open/floor/mineral/plastitanium/red/brig,
 /area/shuttle/escape/brig)
 "aL" = (
@@ -215,10 +213,7 @@
 /turf/open/floor/mineral/plastitanium/red/brig,
 /area/shuttle/escape/brig)
 "aN" = (
-/obj/structure/chair/stool/bar{
-	can_buckle = 1;
-	name = "buckleable bar stool"
-	},
+/obj/structure/chair/stool/bar/directional/south,
 /obj/effect/turf_decal/tile/bar,
 /obj/effect/turf_decal/tile/bar{
 	dir = 1
@@ -226,7 +221,7 @@
 /turf/open/floor/iron,
 /area/shuttle/escape)
 "aO" = (
-/obj/structure/table/wood/bar{
+/obj/structure/table/wood/shuttle_bar{
 	boot_dir = 9
 	},
 /obj/effect/turf_decal/tile/bar,
@@ -236,7 +231,7 @@
 /turf/open/floor/iron,
 /area/shuttle/escape)
 "aP" = (
-/obj/structure/table/wood/bar,
+/obj/structure/table/wood/shuttle_bar,
 /obj/effect/turf_decal/tile/bar,
 /obj/effect/turf_decal/tile/bar{
 	dir = 1
@@ -244,7 +239,7 @@
 /turf/open/floor/iron,
 /area/shuttle/escape)
 "aR" = (
-/obj/structure/table/wood/bar{
+/obj/structure/table/wood/shuttle_bar{
 	boot_dir = 8
 	},
 /obj/effect/turf_decal/tile/bar,
@@ -309,8 +304,8 @@
 /turf/open/floor/iron/grimy,
 /area/shuttle/escape)
 "ba" = (
-/obj/structure/table/wood/bar,
-/obj/effect/spawner/lootdrop/gambling,
+/obj/structure/table/wood/shuttle_bar,
+/obj/effect/spawner/random/entertainment/gambling,
 /turf/open/floor/iron/grimy,
 /area/shuttle/escape)
 "bc" = (
@@ -322,7 +317,7 @@
 /turf/open/floor/iron/grimy,
 /area/shuttle/escape)
 "bd" = (
-/obj/structure/table/wood/bar{
+/obj/structure/table/wood/shuttle_bar{
 	boot_dir = 10
 	},
 /obj/effect/turf_decal/tile/bar,
@@ -332,7 +327,7 @@
 /turf/open/floor/iron,
 /area/shuttle/escape)
 "be" = (
-/obj/structure/table/wood/bar{
+/obj/structure/table/wood/shuttle_bar{
 	boot_dir = 2
 	},
 /obj/effect/turf_decal/tile/bar,
@@ -465,7 +460,7 @@
 /turf/open/floor/iron/grimy,
 /area/shuttle/escape)
 "bI" = (
-/obj/structure/table/wood/bar,
+/obj/structure/table/wood/shuttle_bar,
 /obj/item/instrument/guitar,
 /obj/effect/turf_decal/tile/bar,
 /obj/effect/turf_decal/tile/bar{
@@ -474,7 +469,7 @@
 /turf/open/floor/iron,
 /area/shuttle/escape)
 "bJ" = (
-/obj/structure/table/wood/bar,
+/obj/structure/table/wood/shuttle_bar,
 /obj/item/storage/fancy/donut_box,
 /turf/open/floor/iron/grimy,
 /area/shuttle/escape)
@@ -485,7 +480,7 @@
 /turf/open/floor/iron/grimy,
 /area/shuttle/escape)
 "bL" = (
-/obj/structure/table/wood/bar,
+/obj/structure/table/wood/shuttle_bar,
 /turf/open/floor/iron/grimy,
 /area/shuttle/escape)
 "bM" = (
@@ -506,12 +501,12 @@
 /turf/open/floor/iron,
 /area/shuttle/escape)
 "bO" = (
-/obj/structure/table/wood/bar,
+/obj/structure/table/wood/shuttle_bar,
 /obj/item/folder/red,
 /turf/open/floor/iron/grimy,
 /area/shuttle/escape)
 "bP" = (
-/obj/structure/table/wood/bar,
+/obj/structure/table/wood/shuttle_bar,
 /obj/item/toy/cards/deck/cas,
 /obj/item/toy/cards/deck/cas/black{
 	pixel_y = 6
@@ -534,8 +529,8 @@
 /area/shuttle/escape)
 "bS" = (
 /obj/structure/table,
-/obj/item/storage/firstaid/regular,
-/obj/item/storage/firstaid/toxin{
+/obj/item/storage/medkit/regular,
+/obj/item/storage/medkit/toxin{
 	pixel_x = 4;
 	pixel_y = 4
 	},
@@ -553,15 +548,15 @@
 /area/shuttle/escape)
 "bU" = (
 /obj/structure/table,
-/obj/item/storage/firstaid/fire,
-/obj/item/storage/firstaid/brute{
+/obj/item/storage/medkit/fire,
+/obj/item/storage/medkit/brute{
 	pixel_x = 4;
 	pixel_y = 4
 	},
 /turf/open/floor/mineral/titanium,
 /area/shuttle/escape)
 "bV" = (
-/obj/structure/table/wood/bar{
+/obj/structure/table/wood/shuttle_bar{
 	boot_dir = 8
 	},
 /obj/effect/fun_balloon/sentience/emergency_shuttle{
@@ -616,6 +611,17 @@
 /obj/machinery/light/small/directional/east,
 /obj/machinery/stasis,
 /turf/open/floor/mineral/titanium,
+/area/shuttle/escape)
+"en" = (
+/obj/structure/chair/stool/bar/directional/west{
+	can_buckle = 1;
+	name = "buckleable bar stool"
+	},
+/obj/effect/turf_decal/tile/bar,
+/obj/effect/turf_decal/tile/bar{
+	dir = 1
+	},
+/turf/open/floor/iron,
 /area/shuttle/escape)
 "EL" = (
 /obj/effect/turf_decal/tile/bar,
@@ -778,13 +784,13 @@ an
 az
 aE
 aE
-aN
-aN
-aN
-aN
-aN
-aN
-aN
+en
+en
+en
+en
+en
+en
+en
 aE
 ca
 ae

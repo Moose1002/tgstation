@@ -13,7 +13,7 @@
 	///List of consoles that can access the pad
 	var/list/obj/machinery/computer/mechpad/consoles
 
-/obj/machinery/mechpad/Initialize()
+/obj/machinery/mechpad/Initialize(mapload)
 	. = ..()
 	display_name = "Orbital Pad - [get_area_name(src)]"
 	GLOB.mechpad_list += src
@@ -30,7 +30,7 @@
 /obj/machinery/mechpad/screwdriver_act(mob/user, obj/item/tool)
 	. = ..()
 	if(!.)
-		return default_deconstruction_screwdriver(user, "mechpad-o", "mechpad", tool)
+		return default_deconstruction_screwdriver(user, "mechpad-open", "mechpad", tool)
 
 /obj/machinery/mechpad/crowbar_act(mob/user, obj/item/tool)
 	..()
@@ -44,7 +44,7 @@
 		return
 	var/obj/item/multitool/multitool = tool
 	multitool.buffer = src
-	to_chat(user, "<span class='notice'>You save the data in the [multitool.name]'s buffer.</span>")
+	to_chat(user, span_notice("You save the data in the [multitool.name]'s buffer."))
 	return TRUE
 
 /**
@@ -60,6 +60,7 @@
 		"style" = STYLE_SEETHROUGH,
 		"reverse_dropoff_coords" = list(reverse_turf.x, reverse_turf.y, reverse_turf.z)
 	))
+	use_power(active_power_usage)
 
 /obj/structure/closet/supplypod/mechpod
 	style = STYLE_SEETHROUGH

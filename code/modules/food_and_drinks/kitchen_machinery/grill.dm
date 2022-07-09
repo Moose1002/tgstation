@@ -9,6 +9,7 @@
 	icon = 'icons/obj/kitchen.dmi'
 	icon_state = "grill_open"
 	density = TRUE
+	pass_flags_self = PASSMACHINE | LETPASSTHROW
 	layer = BELOW_OBJ_LAYER
 	use_power = NO_POWER_USE
 	var/grill_fuel = 0
@@ -16,9 +17,9 @@
 	var/grill_time = 0
 	var/datum/looping_sound/grill/grill_loop
 
-/obj/machinery/grill/Initialize()
+/obj/machinery/grill/Initialize(mapload)
 	. = ..()
-	grill_loop = new(list(src), FALSE)
+	grill_loop = new(src, FALSE)
 
 /obj/machinery/grill/Destroy()
 	QDEL_NULL(grill_loop)
@@ -38,7 +39,7 @@
 	if(istype(I, /obj/item/stack/sheet/mineral/coal) || istype(I, /obj/item/stack/sheet/mineral/wood))
 		var/obj/item/stack/S = I
 		var/stackamount = S.get_amount()
-		to_chat(user, "<span class='notice'>You put [stackamount] [I]s in [src].</span>")
+		to_chat(user, span_notice("You put [stackamount] [I]s in [src]."))
 		if(istype(I, /obj/item/stack/sheet/mineral/coal))
 			grill_fuel += (500 * stackamount)
 		else
@@ -47,12 +48,12 @@
 		update_appearance()
 		return
 	if(I.resistance_flags & INDESTRUCTIBLE)
-		to_chat(user, "<span class='warning'>You don't feel it would be wise to grill [I]...</span>")
+		to_chat(user, span_warning("You don't feel it would be wise to grill [I]..."))
 		return ..()
 	if(istype(I, /obj/item/reagent_containers/food/drinks))
 		if(I.reagents.has_reagent(/datum/reagent/consumable/monkey_energy))
 			grill_fuel += (20 * (I.reagents.get_reagent_amount(/datum/reagent/consumable/monkey_energy)))
-			to_chat(user, "<span class='notice'>You pour the Monkey Energy in [src].</span>")
+			to_chat(user, span_notice("You pour the Monkey Energy in [src]."))
 			I.reagents.remove_reagent(/datum/reagent/consumable/monkey_energy, I.reagents.get_reagent_amount(/datum/reagent/consumable/monkey_energy))
 			update_appearance()
 			return
@@ -60,16 +61,16 @@
 		if(HAS_TRAIT(I, TRAIT_NODROP) || (I.item_flags & (ABSTRACT | DROPDEL)))
 			return ..()
 		else if(HAS_TRAIT(I, TRAIT_FOOD_GRILLED))
-			to_chat(user, "<span class='notice'>[I] has already been grilled!</span>")
+			to_chat(user, span_notice("[I] has already been grilled!"))
 			return
 		else if(grill_fuel <= 0)
-			to_chat(user, "<span class='warning'>There is not enough fuel!</span>")
+			to_chat(user, span_warning("There is not enough fuel!"))
 			return
 		else if(!grilled_item && user.transferItemToLoc(I, src))
 			grilled_item = I
 			RegisterSignal(grilled_item, COMSIG_GRILL_COMPLETED, .proc/GrillCompleted)
 			ADD_TRAIT(grilled_item, TRAIT_FOOD_GRILLED, "boomers")
-			to_chat(user, "<span class='notice'>You put the [grilled_item] on [src].</span>")
+			to_chat(user, span_notice("You put the [grilled_item] on [src]."))
 			update_appearance()
 			grill_loop.start()
 			return
@@ -84,8 +85,8 @@
 	else
 		grill_fuel -= GRILL_FUELUSAGE_IDLE * delta_time
 		if(DT_PROB(0.5, delta_time))
-			var/datum/effect_system/smoke_spread/bad/smoke = new
-			smoke.set_up(1, loc)
+			var/datum/effect_system/fluid_spread/smoke/bad/smoke = new
+			smoke.set_up(1, holder = src, location = loc)
 			smoke.start()
 	if(grilled_item)
 		SEND_SIGNAL(grilled_item, COMSIG_ITEM_GRILLED, src, delta_time)
@@ -94,11 +95,11 @@
 		grill_fuel -= GRILL_FUELUSAGE_ACTIVE * delta_time
 		grilled_item.AddComponent(/datum/component/sizzle)
 
-/obj/machinery/grill/Exited(atom/movable/AM)
-	if(AM == grilled_item)
+/obj/machinery/grill/Exited(atom/movable/gone, direction)
+	if(gone == grilled_item)
 		finish_grill()
 		grilled_item = null
-	..()
+	return ..()
 
 /obj/machinery/grill/Destroy()
 	grilled_item = null
@@ -126,31 +127,16 @@
 
 /obj/machinery/grill/attack_hand(mob/user, list/modifiers)
 	if(grilled_item)
-		to_chat(user, "<span class='notice'>You take out [grilled_item] from [src].</span>")
+		to_chat(user, span_notice("You take out [grilled_item] from [src]."))
 		grilled_item.forceMove(drop_location())
 		update_appearance()
 		return
 	return ..()
 
 /obj/machinery/grill/proc/finish_grill()
-	switch(grill_time) //no 0-20 to prevent spam
-		if(20 to 30)
-			grilled_item.name = "lightly-grilled [grilled_item.name]"
-			grilled_item.desc = "[grilled_item.desc] It's been lightly grilled."
-		if(30 to 80)
-			grilled_item.name = "grilled [grilled_item.name]"
-			grilled_item.desc = "[grilled_item.desc] It's been grilled."
-			grilled_item.foodtype |= FRIED
-		if(80 to 100)
-			grilled_item.name = "heavily grilled [grilled_item.name]"
-			grilled_item.desc = "[grilled_item.desc] It's been heavily grilled."
-			grilled_item.foodtype |= FRIED
-		if(100 to INFINITY) //grill marks reach max alpha
-			grilled_item.name = "Powerfully Grilled [grilled_item.name]"
-			grilled_item.desc = "A [grilled_item.name]. Reminds you of your wife, wait, no, it's prettier!"
-			grilled_item.foodtype |= FRIED
+	SEND_SIGNAL(grilled_item, COMSIG_GRILL_FOOD, grilled_item, grill_time)
 	grill_time = 0
-	UnregisterSignal(grilled_item, COMSIG_GRILL_COMPLETED, .proc/GrillCompleted)
+	UnregisterSignal(grilled_item, COMSIG_GRILL_COMPLETED)
 	grill_loop.stop()
 
 ///Called when a food is transformed by the grillable component

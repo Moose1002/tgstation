@@ -10,8 +10,6 @@
 	. = ..()
 	ADD_TRAIT(src, TRAIT_NODROP, ABSTRACT_ITEM_TRAIT)
 
-/obj/item/storage/drone_tools/ComponentInitialize()
-	. = ..()
 	var/static/list/drone_builtins = list(
 		/obj/item/crowbar/drone,
 		/obj/item/screwdriver/drone,
@@ -19,12 +17,11 @@
 		/obj/item/weldingtool/drone,
 		/obj/item/wirecutters/drone,
 	)
-	var/datum/component/storage/storage_component = GetComponent(/datum/component/storage)
-	storage_component.max_combined_w_class = 40
-	storage_component.max_w_class = WEIGHT_CLASS_NORMAL
-	storage_component.max_items = 5
-	storage_component.rustle_sound = FALSE
-	storage_component.set_holdable(drone_builtins)
+	atom_storage.max_total_storage = 40
+	atom_storage.max_specific_storage = WEIGHT_CLASS_NORMAL
+	atom_storage.max_slots = 5
+	atom_storage.rustle_sound = FALSE
+	atom_storage.set_holdable(drone_builtins)
 
 
 /obj/item/storage/drone_tools/PopulateContents()
@@ -45,6 +42,7 @@
 	icon = 'icons/obj/items_cyborg.dmi'
 	icon_state = "crowbar_cyborg"
 	inhand_icon_state = "crowbar"
+	item_flags = NO_MAT_REDEMPTION
 
 /obj/item/screwdriver/drone
 	name = "built-in screwdriver"
@@ -52,15 +50,18 @@
 	icon = 'icons/obj/items_cyborg.dmi'
 	icon_state = "screwdriver_cyborg"
 	inhand_icon_state = "screwdriver"
+	item_flags = NO_MAT_REDEMPTION
 	random_color = FALSE
 
 
-/obj/item/screwdriver/drone/worn_overlays(isinhands = FALSE, icon_file)
-	. = list()
-	if(isinhands)
-		var/mutable_appearance/head = mutable_appearance(icon_file, "screwdriver_head")
-		head.appearance_flags = RESET_COLOR
-		. += head
+/obj/item/screwdriver/drone/worn_overlays(mutable_appearance/standing, isinhands = FALSE, icon_file)
+	. = ..()
+	if(!isinhands)
+		return
+
+	var/mutable_appearance/head = mutable_appearance(icon_file, "screwdriver_head")
+	head.appearance_flags = RESET_COLOR
+	. += head
 
 /obj/item/wrench/drone
 	name = "built-in wrench"
@@ -68,12 +69,14 @@
 	icon = 'icons/obj/items_cyborg.dmi'
 	icon_state = "wrench_cyborg"
 	inhand_icon_state = "wrench"
+	item_flags = NO_MAT_REDEMPTION
 
 /obj/item/weldingtool/drone
 	name = "built-in welding tool"
 	desc = "A welding tool built into your chassis."
 	icon = 'icons/obj/items_cyborg.dmi'
 	icon_state = "indwelder_cyborg"
+	item_flags = NO_MAT_REDEMPTION
 
 /obj/item/wirecutters/drone
 	name = "built-in wirecutters"
@@ -81,5 +84,6 @@
 	icon = 'icons/obj/items_cyborg.dmi'
 	icon_state = "wirecutters_cyborg"
 	inhand_icon_state = "cutters"
+	item_flags = NO_MAT_REDEMPTION
 	random_color = FALSE
 

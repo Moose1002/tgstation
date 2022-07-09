@@ -33,7 +33,7 @@
 	name = "Lizard tail kebab"
 	reqs = list(
 		/obj/item/stack/rods = 1,
-		/obj/item/organ/tail/lizard = 1
+		/obj/item/organ/external/tail/lizard = 1
 	)
 	result = /obj/item/food/kebab/tail
 	subcategory = CAT_MEAT
@@ -48,57 +48,6 @@
 		/obj/item/food/grown/tomato = 1
 	)
 	result = /obj/item/food/kebab/fiesta
-	subcategory = CAT_MEAT
-
-////////////////////////////////////////////////FISH////////////////////////////////////////////////
-
-/datum/crafting_recipe/food/cubancarp
-	name = "Cuban carp"
-	reqs = list(
-		/datum/reagent/consumable/flour = 5,
-		/obj/item/food/grown/chili = 1,
-		/obj/item/food/fishmeat/carp = 1
-	)
-	result = /obj/item/food/cubancarp
-	subcategory = CAT_MEAT
-
-/datum/crafting_recipe/food/fishandchips
-	name = "Fish and chips"
-	reqs = list(
-		/obj/item/food/fries = 1,
-		/obj/item/food/fishmeat = 1
-	)
-	result = /obj/item/food/fishandchips
-	subcategory = CAT_MEAT
-
-/datum/crafting_recipe/food/fishfingers
-	name = "Fish fingers"
-	reqs = list(
-		/datum/reagent/consumable/flour = 5,
-		/obj/item/food/bun = 1,
-		/obj/item/food/fishmeat = 1
-	)
-	result = /obj/item/food/fishfingers
-	subcategory = CAT_MEAT
-
-/datum/crafting_recipe/food/fishfry
-	name = "Fish fry"
-	reqs = list(
-		/obj/item/food/grown/corn = 1,
-		/obj/item/food/grown/peas = 1,
-		/obj/item/food/fishmeat = 1
-	)
-	result = /obj/item/food/fishfry
-	subcategory = CAT_MEAT
-
-/datum/crafting_recipe/food/sashimi
-	name = "Sashimi"
-	reqs = list(
-		/datum/reagent/consumable/soysauce = 5,
-		/obj/item/food/spidereggs = 1,
-		/obj/item/food/fishmeat = 1
-	)
-	result = /obj/item/food/sashimi
 	subcategory = CAT_MEAT
 
 ////////////////////////////////////////////////MR SPIDER////////////////////////////////////////////////
@@ -169,7 +118,7 @@
 		/obj/item/food/grown/garlic = 1,
 		/obj/item/food/meatball = 1
 	)
-	result =  /obj/item/food/rawkhinkali
+	result = /obj/item/food/rawkhinkali
 	subcategory = CAT_MEAT
 
 /datum/crafting_recipe/food/meatbun
@@ -244,8 +193,8 @@
 	reqs = list(
 		/obj/item/food/meat/cutlet = 2,
 		/obj/item/food/grown/tomato = 1,
-		/obj/item/food/cheese = 2,
-		/obj/item/food/spaghetti = 1
+		/obj/item/food/cheese/wedge = 2,
+		/obj/item/food/spaghetti/raw = 1
 	)
 	result = /obj/item/food/lasagna
 	subcategory = CAT_MEAT
@@ -314,4 +263,13 @@
 		/obj/item/food/butteredtoast = 1
 	)
 	result = /obj/item/food/full_english
+	subcategory = CAT_MEAT
+
+/datum/crafting_recipe/food/envirochow
+	name = "Envirochow"
+	reqs = list(
+		/obj/item/food/meat/slab/corgi = 2,
+		/datum/reagent/consumable/nutriment/vitamin = 5,
+	)
+	result = /obj/item/food/canned/envirochow
 	subcategory = CAT_MEAT

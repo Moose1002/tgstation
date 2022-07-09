@@ -21,7 +21,7 @@ GLOBAL_LIST_INIT(ore_probability, list(
 	move_resist = INFINITY
 	anchored = TRUE
 
-/obj/structure/spawner/ice_moon/Initialize()
+/obj/structure/spawner/ice_moon/Initialize(mapload)
 	. = ..()
 	clear_rock()
 
@@ -48,7 +48,7 @@ GLOBAL_LIST_INIT(ore_probability, list(
  */
 /obj/structure/spawner/ice_moon/proc/destroy_effect()
 	playsound(loc,'sound/effects/explosionfar.ogg', 200, TRUE)
-	visible_message("<span class='boldannounce'>[src] collapses, sealing everything inside!</span>\n<span class='warning'>Ores fall out of the cave as it is destroyed!</span>")
+	visible_message(span_boldannounce("[src] collapses, sealing everything inside!</span>\n<span class='warning'>Ores fall out of the cave as it is destroyed!"))
 
 /**
  * Drops items after the spawner is destroyed
@@ -80,7 +80,7 @@ GLOBAL_LIST_INIT(ore_probability, list(
 	light_range = 1
 	light_color = COLOR_SOFT_RED
 
-/obj/structure/spawner/ice_moon/demonic_portal/Initialize()
+/obj/structure/spawner/ice_moon/demonic_portal/Initialize(mapload)
 	. = ..()
 	AddComponent(/datum/component/gps, "Netheric Signal")
 
@@ -113,10 +113,10 @@ GLOBAL_LIST_INIT(ore_probability, list(
 	anchored = TRUE
 	density = TRUE
 
-/obj/effect/collapsing_demonic_portal/Initialize()
+/obj/effect/collapsing_demonic_portal/Initialize(mapload)
 	. = ..()
 	playsound(loc,'sound/effects/tendril_destroyed.ogg', 200, FALSE, 50, TRUE, TRUE)
-	visible_message("<span class='boldannounce'>[src] begins to collapse, cutting it off from this world!</span>")
+	visible_message(span_boldannounce("[src] begins to collapse, cutting it off from this world!"))
 	animate(src, transform = matrix().Scale(0, 1), alpha = 50, time = 5 SECONDS)
 	addtimer(CALLBACK(src, .proc/collapse), 5 SECONDS)
 
@@ -133,17 +133,17 @@ GLOBAL_LIST_INIT(ore_probability, list(
  *
  */
 /obj/effect/collapsing_demonic_portal/proc/drop_loot()
-	visible_message("<span class='warning'>Something slips out of [src]!</span>")
+	visible_message(span_warning("Something slips out of [src]!"))
 	var/loot = rand(1, 28)
 	switch(loot)
 		if(1)
-			new /obj/item/clothing/suit/space/hardsuit/cult(loc)
+			new /obj/item/clothing/suit/hooded/cultrobes/hardened(loc)
 		if(2)
 			new /obj/item/clothing/glasses/godeye(loc)
 		if(3)
 			new /obj/item/reagent_containers/glass/bottle/potion/flight(loc)
 		if(4)
-			new /obj/item/organ/heart/cursed/wizard(loc)
+			new /obj/item/organ/internal/heart/cursed/wizard(loc)
 		if(5)
 			new /obj/item/jacobs_ladder(loc)
 		if(6)
@@ -155,7 +155,7 @@ GLOBAL_LIST_INIT(ore_probability, list(
 		if(9)
 			new /obj/item/immortality_talisman(loc)
 		if(10)
-			new /obj/item/book/granter/spell/summonitem(loc)
+			new /obj/item/book/granter/action/spell/summonitem(loc)
 		if(11)
 			new /obj/item/clothing/neck/necklace/memento_mori(loc)
 		if(12)
@@ -191,6 +191,6 @@ GLOBAL_LIST_INIT(ore_probability, list(
 		if(26)
 			new /obj/item/clothing/shoes/winterboots/ice_boots(loc)
 		if(27)
-			new /obj/item/book/granter/spell/sacredflame(loc)
+			new /obj/item/book/granter/action/spell/sacredflame(loc)
 		if(28)
 			new /mob/living/simple_animal/hostile/megafauna/blood_drunk_miner/doom(loc)

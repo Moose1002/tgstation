@@ -1,21 +1,12 @@
 #define CHILLS_CHANGE "chills"
-
-/*
-//////////////////////////////////////
-
-Chills
-
-	No change to hidden.
-	Increases resistance.
-	Increases stage speed.
-	Little transmittable.
-	Low level.
-
-Bonus
-	Cools down your body.
-
-//////////////////////////////////////
-*/
+/** Chills
+ * No change to stealth.
+ * Increases resistance.
+ * Increases stage speed.
+ * Increases transmissibility
+ * Low level
+ * Bonus: Cools down your body.
+ */
 
 /datum/symptom/chills
 	name = "Chills"
@@ -50,9 +41,9 @@ Bonus
 		return
 	var/mob/living/carbon/M = A.affected_mob
 	if(!unsafe || A.stage < 4)
-		to_chat(M, "<span class='warning'>[pick("You feel cold.", "You shiver.")]</span>")
+		to_chat(M, span_warning("[pick("You feel cold.", "You shiver.")]"))
 	else
-		to_chat(M, "<span class='userdanger'>[pick("You feel your blood run cold.", "You feel ice in your veins.", "You feel like you can't heat up.", "You shiver violently.")]</span>")
+		to_chat(M, span_userdanger("[pick("You feel your blood run cold.", "You feel ice in your veins.", "You feel like you can't heat up.", "You shiver violently.")]"))
 	set_body_temp(A.affected_mob, A)
 
 /**

@@ -7,6 +7,7 @@
 	possible_locs = list(BODY_ZONE_R_ARM,BODY_ZONE_L_ARM,BODY_ZONE_R_LEG,BODY_ZONE_L_LEG,BODY_ZONE_CHEST,BODY_ZONE_HEAD)
 	lying_required = FALSE
 	ignore_clothes = TRUE
+	requires_bodypart = FALSE
 
 /datum/surgery/core_removal/can_start(mob/user, mob/living/target)
 	if(target.stat == DEAD)
@@ -22,17 +23,17 @@
 	time = 16
 
 /datum/surgery_step/extract_core/preop(mob/user, mob/living/carbon/target, target_zone, obj/item/tool, datum/surgery/surgery)
-	display_results(user, target, "<span class='notice'>You begin to extract a core from [target]...</span>",
-		"<span class='notice'>[user] begins to extract a core from [target].</span>",
-		"<span class='notice'>[user] begins to extract a core from [target].</span>")
+	display_results(user, target, span_notice("You begin to extract a core from [target]..."),
+		span_notice("[user] begins to extract a core from [target]."),
+		span_notice("[user] begins to extract a core from [target]."))
 
 /datum/surgery_step/extract_core/success(mob/user, mob/living/carbon/target, target_zone, obj/item/tool, datum/surgery/surgery, default_display_results = FALSE)
 	var/mob/living/simple_animal/slime/target_slime = target
 	if(target_slime.cores > 0)
 		target_slime.cores--
-		display_results(user, target, "<span class='notice'>You successfully extract a core from [target]. [target_slime.cores] core\s remaining.</span>",
-			"<span class='notice'>[user] successfully extracts a core from [target]!</span>",
-			"<span class='notice'>[user] successfully extracts a core from [target]!</span>")
+		display_results(user, target, span_notice("You successfully extract a core from [target]. [target_slime.cores] core\s remaining."),
+			span_notice("[user] successfully extracts a core from [target]!"),
+			span_notice("[user] successfully extracts a core from [target]!"))
 
 		new target_slime.coretype(target_slime.loc)
 
@@ -42,5 +43,5 @@
 		else
 			return FALSE
 	else
-		to_chat(user, "<span class='warning'>There aren't any cores left in [target]!</span>")
+		to_chat(user, span_warning("There aren't any cores left in [target]!"))
 		return ..()

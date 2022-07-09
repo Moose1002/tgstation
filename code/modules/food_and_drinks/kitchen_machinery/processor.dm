@@ -7,9 +7,6 @@
 	icon_state = "processor1"
 	layer = BELOW_OBJ_LAYER
 	density = TRUE
-	use_power = IDLE_POWER_USE
-	idle_power_usage = 5
-	active_power_usage = 50
 	circuit = /obj/item/circuitboard/machine/processor
 	var/broken = FALSE
 	var/processing = FALSE
@@ -23,7 +20,7 @@
 	 */
 	var/static/list/processor_inputs
 
-/obj/machinery/processor/Initialize()
+/obj/machinery/processor/Initialize(mapload)
 	. = ..()
 	if(processor_inputs)
 		return
@@ -42,6 +39,7 @@
 			LAZYADD(processor_inputs[machine_type], typecache)
 
 /obj/machinery/processor/RefreshParts()
+	. = ..()
 	for(var/obj/item/stock_parts/matter_bin/B in component_parts)
 		rating_amount = B.rating
 	for(var/obj/item/stock_parts/manipulator/M in component_parts)
@@ -50,14 +48,15 @@
 /obj/machinery/processor/examine(mob/user)
 	. = ..()
 	if(in_range(user, src) || isobserver(user))
-		. += "<span class='notice'>The status display reads: Outputting <b>[rating_amount]</b> item(s) at <b>[rating_speed*100]%</b> speed.</span>"
+		. += span_notice("The status display reads: Outputting <b>[rating_amount]</b> item(s) at <b>[rating_speed*100]%</b> speed.")
 
 /obj/machinery/processor/proc/process_food(datum/food_processor_process/recipe, atom/movable/what)
 	if(recipe.output && loc && !QDELETED(src))
 		var/list/cached_mats = recipe.preserve_materials && what.custom_materials
-		var/cached_multiplier = recipe.multiplier
+		var/cached_multiplier = (recipe.food_multiplier * rating_amount)
 		for(var/i in 1 to cached_multiplier)
 			var/atom/processed_food = new recipe.output(drop_location())
+			what.reagents.copy_to(processed_food, what.reagents.total_volume, multiplier = 1 / cached_multiplier)
 			if(cached_mats)
 				processed_food.set_custom_materials(cached_mats, 1 / cached_multiplier)
 
@@ -68,17 +67,19 @@
 		qdel(what)
 	LAZYREMOVE(processor_contents, what)
 
+/obj/machinery/processor/wrench_act(mob/living/user, obj/item/tool)
+	. = ..()
+	default_unfasten_wrench(user, tool)
+	return TOOL_ACT_TOOLTYPE_SUCCESS
+
 /obj/machinery/processor/attackby(obj/item/O, mob/living/user, params)
 	if(processing)
-		to_chat(user, "<span class='warning'>[src] is in the process of processing!</span>")
+		to_chat(user, span_warning("[src] is in the process of processing!"))
 		return TRUE
 	if(default_deconstruction_screwdriver(user, "processor", "processor1", O))
 		return
 
 	if(default_pry_open(O))
-		return
-
-	if(default_unfasten_wrench(user, O))
 		return
 
 	if(default_deconstruction_crowbar(O))
@@ -92,50 +93,50 @@
 				continue
 			var/datum/food_processor_process/P = PROCESSOR_SELECT_RECIPE(S)
 			if(P)
-				if(SEND_SIGNAL(T, COMSIG_TRY_STORAGE_TAKE, S, src))
+				if(T.atom_storage.attempt_remove(S, src))
 					LAZYADD(processor_contents, S)
 					loaded++
 
 		if(loaded)
-			to_chat(user, "<span class='notice'>You insert [loaded] items into [src].</span>")
+			to_chat(user, span_notice("You insert [loaded] items into [src]."))
 		return
 
 	var/datum/food_processor_process/P = PROCESSOR_SELECT_RECIPE(O)
 	if(P)
-		user.visible_message("<span class='notice'>[user] put [O] into [src].</span>", \
-			"<span class='notice'>You put [O] into [src].</span>")
+		user.visible_message(span_notice("[user] put [O] into [src]."), \
+			span_notice("You put [O] into [src]."))
 		user.transferItemToLoc(O, src, TRUE)
 		LAZYADD(processor_contents, O)
 		return 1
 	else if(!user.combat_mode)
-		to_chat(user, "<span class='warning'>That probably won't blend!</span>")
+		to_chat(user, span_warning("That probably won't blend!"))
 		return 1
 	else
 		return ..()
 
 /obj/machinery/processor/interact(mob/user)
 	if(processing)
-		to_chat(user, "<span class='warning'>[src] is in the process of processing!</span>")
+		to_chat(user, span_warning("[src] is in the process of processing!"))
 		return TRUE
 	if(ismob(user.pulling) && PROCESSOR_SELECT_RECIPE(user.pulling))
 		if(user.grab_state < GRAB_AGGRESSIVE)
-			to_chat(user, "<span class='warning'>You need a better grip to do that!</span>")
+			to_chat(user, span_warning("You need a better grip to do that!"))
 			return
 		var/mob/living/pushed_mob = user.pulling
-		visible_message("<span class='warning'>[user] stuffs [pushed_mob] into [src]!</span>")
+		visible_message(span_warning("[user] stuffs [pushed_mob] into [src]!"))
 		pushed_mob.forceMove(src)
 		LAZYADD(processor_contents, pushed_mob)
 		user.stop_pulling()
 		return
 	if(!LAZYLEN(processor_contents))
-		to_chat(user, "<span class='warning'>[src] is empty!</span>")
+		to_chat(user, span_warning("[src] is empty!"))
 		return TRUE
 	processing = TRUE
-	user.visible_message("<span class='notice'>[user] turns on [src].</span>", \
-		"<span class='notice'>You turn on [src].</span>", \
-		"<span class='hear'>You hear a food processor.</span>")
+	user.visible_message(span_notice("[user] turns on [src]."), \
+		span_notice("You turn on [src]."), \
+		span_hear("You hear a food processor."))
 	playsound(src.loc, 'sound/machines/blender.ogg', 50, TRUE)
-	use_power(500)
+	use_power(active_power_usage)
 	var/total_time = 0
 	for(var/atom/movable/movable_input as anything in processor_contents)
 		var/datum/food_processor_process/recipe = PROCESSOR_SELECT_RECIPE(movable_input)
@@ -154,7 +155,7 @@
 		process_food(P, O)
 	pixel_x = base_pixel_x //return to its spot after shaking
 	processing = FALSE
-	visible_message("<span class='notice'>\The [src] finishes processing.</span>")
+	visible_message(span_notice("\The [src] finishes processing."))
 
 /obj/machinery/processor/verb/eject()
 	set category = "Object"
@@ -174,11 +175,11 @@
 /obj/machinery/processor/dump_inventory_contents()
 	. = ..()
 	if(!LAZYLEN(processor_contents))
-		processor_contents.Cut()
+		processor_contents = null
 
 /obj/machinery/processor/container_resist_act(mob/living/user)
 	user.forceMove(drop_location())
-	user.visible_message("<span class='notice'>[user] crawls free of the processor!</span>")
+	user.visible_message(span_notice("[user] crawls free of the processor!"))
 
 /obj/machinery/processor/slime
 	name = "slime processor"
@@ -216,7 +217,7 @@
 	if (!P)
 		return
 
-	visible_message("<span class='notice'>[picked_slime] is sucked into [src].</span>")
+	visible_message(span_notice("[picked_slime] is sucked into [src]."))
 	LAZYADD(processor_contents, picked_slime)
 	picked_slime.forceMove(src)
 
@@ -227,7 +228,7 @@
 		if(S.stat != DEAD)
 			LAZYREMOVE(processor_contents, S)
 			S.forceMove(drop_location())
-			S.visible_message("<span class='notice'>[C] crawls free of the processor!</span>")
+			S.visible_message(span_notice("[C] crawls free of the processor!"))
 			return
 		for(var/i in 1 to (C+rating_amount-1))
 			var/atom/movable/item = new S.coretype(drop_location())

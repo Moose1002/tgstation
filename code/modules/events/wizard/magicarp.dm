@@ -40,15 +40,13 @@
 	random_color = FALSE
 
 	var/allowed_projectile_types = list(/obj/projectile/magic/change, /obj/projectile/magic/animate, /obj/projectile/magic/resurrection,
-	/obj/projectile/magic/death, /obj/projectile/magic/teleport, /obj/projectile/magic/door, /obj/projectile/magic/aoe/fireball,
+	/obj/projectile/magic/death, /obj/projectile/magic/teleport, /obj/projectile/magic/door, /obj/projectile/magic/fireball,
 	/obj/projectile/magic/spellblade, /obj/projectile/magic/arcane_barrage)
 
-/mob/living/simple_animal/hostile/carp/ranged/Initialize()
+/mob/living/simple_animal/hostile/carp/ranged/Initialize(mapload)
 	projectiletype = pick(allowed_projectile_types)
 	. = ..()
 
-/mob/living/simple_animal/hostile/carp/cayenne/make_tameable()
-	return
 /mob/living/simple_animal/hostile/carp/ranged/chaos
 	name = "chaos magicarp"
 	desc = "50% carp, 100% magic, 150% horrible."
@@ -64,9 +62,9 @@
 /mob/living/simple_animal/hostile/carp/ranged/xenobiology // these are for the xenobio gold slime pool
 	gold_core_spawnable = HOSTILE_SPAWN
 	allowed_projectile_types = list(/obj/projectile/magic/animate, /obj/projectile/magic/teleport,
-	/obj/projectile/magic/door, /obj/projectile/magic/aoe/fireball, /obj/projectile/magic/spellblade, /obj/projectile/magic/arcane_barrage) //thanks Lett1
+	/obj/projectile/magic/door, /obj/projectile/magic/fireball, /obj/projectile/magic/spellblade, /obj/projectile/magic/arcane_barrage) //thanks Lett1
 
 /mob/living/simple_animal/hostile/carp/ranged/chaos/xenobiology
 	gold_core_spawnable = HOSTILE_SPAWN
 	allowed_projectile_types = list(/obj/projectile/magic/animate, /obj/projectile/magic/teleport,
-	/obj/projectile/magic/door, /obj/projectile/magic/aoe/fireball, /obj/projectile/magic/spellblade, /obj/projectile/magic/arcane_barrage)
+	/obj/projectile/magic/door, /obj/projectile/magic/fireball, /obj/projectile/magic/spellblade, /obj/projectile/magic/arcane_barrage)

@@ -22,10 +22,12 @@
 	var/organ_type = /obj/item/organ
 	var/starting_organ
 	var/obj/item/organ/storedorgan
+	var/surgery_speed = 1
 
 /obj/item/autosurgeon/organ/syndicate
 	name = "suspicious implant autosurgeon"
 	icon_state = "syndicate_autoimplanter"
+	surgery_speed = 0.75
 
 /obj/item/autosurgeon/organ/Initialize(mapload)
 	. = ..()
@@ -37,16 +39,7 @@
 	item.forceMove(src)
 	name = "[initial(name)] ([storedorgan.name])"
 
-/obj/item/autosurgeon/organ/attack_self(mob/user)//when the object it used...
-	if(!uses)
-		to_chat(user, "<span class='alert'>[src] has already been used. The tools are dull and won't reactivate.</span>")
-		return
-	else if(!storedorgan)
-		to_chat(user, "<span class='alert'>[src] currently has no implant stored.</span>")
-		return
-	storedorgan.Insert(user)//insert stored organ into the user
-	user.visible_message("<span class='notice'>[user] presses a button on [src], and you hear a short mechanical noise.</span>", "<span class='notice'>You feel a sharp sting as [src] plunges into your body.</span>")
-	playsound(get_turf(user), 'sound/weapons/circsawhit.ogg', 50, TRUE)
+/obj/item/autosurgeon/organ/proc/use_autosurgeon()
 	storedorgan = null
 	name = initial(name)
 	if(uses != INFINITE)
@@ -54,58 +47,80 @@
 	if(!uses)
 		desc = "[initial(desc)] Looks like it's been used up."
 
+/obj/item/autosurgeon/organ/attack_self(mob/user)//when the object it used...
+	if(!uses)
+		to_chat(user, span_alert("[src] has already been used. The tools are dull and won't reactivate."))
+		return
+	else if(!storedorgan)
+		to_chat(user, span_alert("[src] currently has no implant stored."))
+		return
+	storedorgan.Insert(user)//insert stored organ into the user
+	user.visible_message(span_notice("[user] presses a button on [src], and you hear a short mechanical noise."), span_notice("You feel a sharp sting as [src] plunges into your body."))
+	playsound(get_turf(user), 'sound/weapons/circsawhit.ogg', 50, TRUE)
+	use_autosurgeon()
+
 /obj/item/autosurgeon/organ/attackby(obj/item/weapon, mob/user, params)
 	if(istype(weapon, organ_type))
 		if(storedorgan)
-			to_chat(user, "<span class='alert'>[src] already has an implant stored.</span>")
+			to_chat(user, span_alert("[src] already has an implant stored."))
 			return
 		else if(!uses)
-			to_chat(user, "<span class='alert'>[src] has already been used up.</span>")
+			to_chat(user, span_alert("[src] has already been used up."))
 			return
 		if(!user.transferItemToLoc(weapon, src))
 			return
 		storedorgan = weapon
-		to_chat(user, "<span class='notice'>You insert the [weapon] into [src].</span>")
+		to_chat(user, span_notice("You insert the [weapon] into [src]."))
 	else
 		return ..()
+
+/obj/item/autosurgeon/organ/attack(mob/living/target, mob/living/user, params)
+	add_fingerprint(user)
+	user.visible_message(
+		"[user] prepares to use [src] on [target].",
+		"You begin to prepare to use [src] on [target]."
+	)
+	if(!do_after(user, (8 SECONDS * surgery_speed), target))
+		return
+	user.visible_message(span_notice("[user] presses a button on [src], and you hear a short mechanical noise."), span_notice("You press a button on [src] as it plunges into [target]'s body."))
+	to_chat(target, span_notice("You feel a sharp sting as something plunges into your body!"))
+	playsound(get_turf(user), 'sound/weapons/circsawhit.ogg', 50, vary = TRUE)
+	storedorgan.Insert(target) //let's actually get the organ into the target, yeah?
+	use_autosurgeon()
 
 /obj/item/autosurgeon/organ/screwdriver_act(mob/living/user, obj/item/screwtool)
 	if(..())
 		return TRUE
 	if(!storedorgan)
-		to_chat(user, "<span class='warning'>There's no implant in [src] for you to remove!</span>")
+		to_chat(user, span_warning("There's no implant in [src] for you to remove!"))
 	else
 		var/atom/drop_loc = user.drop_location()
 		for(var/atom/movable/stored_implant as anything in src)
 			stored_implant.forceMove(drop_loc)
 
-		to_chat(user, "<span class='notice'>You remove the [storedorgan] from [src].</span>")
+		to_chat(user, span_notice("You remove the [storedorgan] from [src]."))
 		screwtool.play_tool_sound(src)
-		storedorgan = null
-		if(uses != INFINITE)
-			uses--
-		if(!uses)
-			desc = "[initial(desc)] Looks like it's been used up."
+		use_autosurgeon()
 	return TRUE
 
 /obj/item/autosurgeon/organ/cmo
 	desc = "A single use autosurgeon that contains a medical heads-up display augment. A screwdriver can be used to remove it, but implants can't be placed back in."
 	uses = 1
-	starting_organ = /obj/item/organ/cyberimp/eyes/hud/medical
+	starting_organ = /obj/item/organ/internal/cyberimp/eyes/hud/medical
 
 /obj/item/autosurgeon/organ/syndicate/laser_arm
 	desc = "A single use autosurgeon that contains a combat arms-up laser augment. A screwdriver can be used to remove it, but implants can't be placed back in."
 	uses = 1
-	starting_organ = /obj/item/organ/cyberimp/arm/gun/laser
+	starting_organ = /obj/item/organ/internal/cyberimp/arm/gun/laser
 
 /obj/item/autosurgeon/organ/syndicate/thermal_eyes
-	starting_organ = /obj/item/organ/eyes/robotic/thermals
+	starting_organ = /obj/item/organ/internal/eyes/robotic/thermals
 
 /obj/item/autosurgeon/organ/syndicate/xray_eyes
-	starting_organ = /obj/item/organ/eyes/robotic/xray
+	starting_organ = /obj/item/organ/internal/eyes/robotic/xray
 
 /obj/item/autosurgeon/organ/syndicate/anti_stun
-	starting_organ = /obj/item/organ/cyberimp/brain/anti_stun
+	starting_organ = /obj/item/organ/internal/cyberimp/brain/anti_stun
 
 /obj/item/autosurgeon/organ/syndicate/reviver
-	starting_organ = /obj/item/organ/cyberimp/chest/reviver
+	starting_organ = /obj/item/organ/internal/cyberimp/chest/reviver

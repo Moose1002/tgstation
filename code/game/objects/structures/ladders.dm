@@ -14,6 +14,7 @@
 
 /obj/structure/ladder/Initialize(mapload, obj/structure/ladder/up, obj/structure/ladder/down)
 	..()
+	GLOB.ladders += src
 	if (up)
 		src.up = up
 		up.down = src
@@ -25,8 +26,7 @@
 	return INITIALIZE_HINT_LATELOAD
 
 /obj/structure/ladder/Destroy(force)
-	if ((resistance_flags & INDESTRUCTIBLE) && !force)
-		return QDEL_HINT_LETMELIVE
+	GLOB.ladders -= src
 	disconnect()
 	return ..()
 
@@ -67,31 +67,23 @@
 
 /obj/structure/ladder/singularity_pull()
 	if (!(resistance_flags & INDESTRUCTIBLE))
-		visible_message("<span class='danger'>[src] is torn to pieces by the gravitational pull!</span>")
+		visible_message(span_danger("[src] is torn to pieces by the gravitational pull!"))
 		qdel(src)
 
 /obj/structure/ladder/proc/travel(going_up, mob/user, is_ghost, obj/structure/ladder/ladder)
+	var/response = SEND_SIGNAL(user, COMSIG_LADDER_TRAVEL, src, ladder, going_up)
+	if(response & LADDER_TRAVEL_BLOCK)
+		return
+
 	if(!is_ghost)
 		ladder.add_fingerprint(user)
 		if(!do_after(user, travel_time, target = src))
 			return
 		show_fluff_message(going_up, user)
 
-
-	var/turf/T = get_turf(ladder)
-	var/atom/movable/AM
-	if(user.pulling)
-		AM = user.pulling
-		AM.forceMove(T)
-	user.forceMove(T)
-	if(AM)
-		user.start_pulling(AM)
-
-	//reopening ladder radial menu ahead
-	T = get_turf(user)
-	var/obj/structure/ladder/ladder_structure = locate() in T
-	if (ladder_structure)
-		ladder_structure.use(user)
+	var/turf/target = get_turf(ladder)
+	user.zMove(target = target, z_move_flags = ZMOVE_CHECK_PULLEDBY|ZMOVE_ALLOW_BUCKLED|ZMOVE_INCLUDE_PULLED)
+	ladder.use(user) //reopening ladder radial menu ahead
 
 /obj/structure/ladder/proc/use(mob/user, is_ghost=FALSE)
 	if (!is_ghost && !in_range(src, user))
@@ -103,7 +95,7 @@
 	if (down)
 		tool_list["Down"] = image(icon = 'icons/testing/turf_analysis.dmi', icon_state = "red_arrow", dir = SOUTH)
 	if (!length(tool_list))
-		to_chat(user, "<span class='warning'>[src] doesn't seem to lead anywhere!</span>")
+		to_chat(user, span_warning("[src] doesn't seem to lead anywhere!"))
 		return
 
 	var/result = show_radial_menu(user, src, tool_list, custom_check = CALLBACK(src, .proc/check_menu, user, is_ghost), require_near = !is_ghost, tooltips = TRUE)
@@ -160,9 +152,9 @@
 
 /obj/structure/ladder/proc/show_fluff_message(going_up, mob/user)
 	if(going_up)
-		user.visible_message("<span class='notice'>[user] climbs up [src].</span>", "<span class='notice'>You climb up [src].</span>")
+		user.visible_message(span_notice("[user] climbs up [src]."), span_notice("You climb up [src]."))
 	else
-		user.visible_message("<span class='notice'>[user] climbs down [src].</span>", "<span class='notice'>You climb down [src].</span>")
+		user.visible_message(span_notice("[user] climbs down [src]."), span_notice("You climb down [src]."))
 
 
 // Indestructible away mission ladders which link based on a mapped ID and height value rather than X/Y/Z.
@@ -173,35 +165,25 @@
 	var/id
 	var/height = 0  // higher numbers are considered physically higher
 
-/obj/structure/ladder/unbreakable/Initialize()
-	GLOB.ladders += src
-	return ..()
-
-/obj/structure/ladder/unbreakable/Destroy()
-	. = ..()
-	if (. != QDEL_HINT_LETMELIVE)
-		GLOB.ladders -= src
-
 /obj/structure/ladder/unbreakable/LateInitialize()
 	// Override the parent to find ladders based on being height-linked
 	if (!id || (up && down))
 		update_appearance()
 		return
 
-	for (var/O in GLOB.ladders)
-		var/obj/structure/ladder/unbreakable/L = O
-		if (L.id != id)
+	for(var/obj/structure/ladder/unbreakable/unbreakable_ladder in GLOB.ladders)
+		if (unbreakable_ladder.id != id)
 			continue  // not one of our pals
-		if (!down && L.height == height - 1)
-			down = L
-			L.up = src
-			L.update_appearance()
+		if (!down && unbreakable_ladder.height == height - 1)
+			down = unbreakable_ladder
+			unbreakable_ladder.up = src
+			unbreakable_ladder.update_appearance()
 			if (up)
 				break  // break if both our connections are filled
-		else if (!up && L.height == height + 1)
-			up = L
-			L.down = src
-			L.update_appearance()
+		else if (!up && unbreakable_ladder.height == height + 1)
+			up = unbreakable_ladder
+			unbreakable_ladder.down = src
+			unbreakable_ladder.update_appearance()
 			if (down)
 				break  // break if both our connections are filled
 
