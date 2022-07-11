@@ -71,6 +71,53 @@ GLOBAL_LIST_EMPTY(conveyors_by_id)
 	if(.)
 		set_operating(TRUE)
 
+/obj/machinery/conveyor/underground
+	name = "underground belt"
+	desc = "An underground conveyor belt. Good for crossing other conveyor belts."
+	var/obj/machinery/conveyor/underground/entrance
+	var/max_distance = 4
+
+/obj/machinery/conveyor/underground/Initialize(mapload, new_dir, new_id)
+	. = ..()
+	var/turf/current_turf = get_turf(src)
+	var/exit_dir = src.dir
+	switch(exit_dir)
+		if(NORTH)
+			exit_dir = SOUTH
+		if(SOUTH)
+			exit_dir = NORTH
+		if(EAST)
+			exit_dir = WEST
+		if(WEST)
+			exit_dir = EAST
+	var/distance = 0
+	while(!entrance)
+		current_turf = get_step(current_turf, exit_dir)
+		distance += 1
+		if(locate(/obj/machinery/conveyor/underground) in current_turf)
+			entrance = current_turf
+		else if(distance >=  max_distance)
+			entrance = TRUE
+
+
+/obj/machinery/conveyor/underground/start_conveying(atom/movable/moving)
+	if(istype(entrance, /obj/machinery/conveyor/underground))
+		var/datum/move_loop/move/moving_loop = SSmove_manager.processing_on(moving, SSconveyors)
+		if(moving_loop)
+			moving_loop.direction = movedir
+			moving_loop.delay = speed * 1 SECONDS
+			return
+
+		var/static/list/unconveyables = typecacheof(list(/obj/effect, /mob/dead))
+		if(!istype(moving) || is_type_in_typecache(moving, unconveyables) || moving == src)
+			return
+		moving.AddComponent(/datum/component/convey, movedir, speed * 1 SECONDS)
+
+/obj/machinery/conveyor/underground/stop_conveying(atom/movable/thing)
+	if(!ismovable(thing))
+		return
+	SSmove_manager.stop_looping(thing, SSconveyors)
+
 // create a conveyor
 /obj/machinery/conveyor/Initialize(mapload, new_dir, new_id)
 	..()
