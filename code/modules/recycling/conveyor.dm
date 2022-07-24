@@ -74,7 +74,7 @@ GLOBAL_LIST_EMPTY(conveyors_by_id)
 /obj/machinery/conveyor/underground
 	name = "underground belt"
 	desc = "An underground conveyor belt. Good for crossing other conveyor belts."
-	var/obj/machinery/conveyor/underground/entrance
+	var/obj/machinery/conveyor/underground/linked_conveyor
 	var/max_distance = 4
 
 /obj/machinery/conveyor/underground/Initialize(mapload, new_dir, new_id)
@@ -91,16 +91,18 @@ GLOBAL_LIST_EMPTY(conveyors_by_id)
 		if(WEST)
 			exit_dir = EAST
 	var/distance = 0
-	while(!entrance)
+
+	while(!linked_conveyor)
 		current_turf = get_step(current_turf, exit_dir)
 		distance += 1
 		if(locate(/obj/machinery/conveyor/underground) in current_turf)
-			entrance = current_turf
+			linked_conveyor = locate(/obj/machinery/conveyor/underground) in current_turf
+			linked_conveyor.linked_conveyor = src
 		else if(distance >=  max_distance)
-			entrance = TRUE
-
+			break
 
 /obj/machinery/conveyor/underground/start_conveying(atom/movable/moving)
+
 	if(istype(entrance, /obj/machinery/conveyor/underground))
 		var/datum/move_loop/move/moving_loop = SSmove_manager.processing_on(moving, SSconveyors)
 		if(moving_loop)
@@ -117,6 +119,18 @@ GLOBAL_LIST_EMPTY(conveyors_by_id)
 	if(!ismovable(thing))
 		return
 	SSmove_manager.stop_looping(thing, SSconveyors)
+
+/obj/machinery/conveyor/underground/auto
+	processing_flags = START_PROCESSING_ON_INIT
+
+/obj/machinery/conveyor/underground/auto/Initialize(mapload, newdir)
+	. = ..()
+	set_operating(TRUE)
+
+/obj/machinery/conveyor/underground/auto/update()
+	. = ..()
+	if(.)
+		set_operating(TRUE)
 
 // create a conveyor
 /obj/machinery/conveyor/Initialize(mapload, new_dir, new_id)
