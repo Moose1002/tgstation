@@ -75,10 +75,20 @@ GLOBAL_LIST_EMPTY(conveyors_by_id)
 	name = "underground belt"
 	desc = "An underground conveyor belt. Good for crossing other conveyor belts."
 	var/obj/machinery/conveyor/underground/linked_conveyor
+	var/obj/machinery/conveyor/underground/entrance
+	var/obj/machinery/conveyor/underground/exit
 	var/max_distance = 4
 
 /obj/machinery/conveyor/underground/Initialize(mapload, new_dir, new_id)
 	. = ..()
+
+	var/static/list/loc_connections = list(
+		//COMSIG_ATOM_EXITED = .proc/conveyable_exit,
+		COMSIG_ATOM_ENTERED = .proc/underground_enter,
+		COMSIG_ATOM_INITIALIZED_ON = .proc/underground_enter
+	)
+	AddElement(/datum/element/connect_loc, loc_connections)
+
 	var/turf/current_turf = get_turf(src)
 	var/exit_dir = src.dir
 	switch(exit_dir)
@@ -92,33 +102,32 @@ GLOBAL_LIST_EMPTY(conveyors_by_id)
 			exit_dir = EAST
 	var/distance = 0
 
-	while(!linked_conveyor)
+	while(!entrance)
 		current_turf = get_step(current_turf, exit_dir)
 		distance += 1
 		if(locate(/obj/machinery/conveyor/underground) in current_turf)
-			linked_conveyor = locate(/obj/machinery/conveyor/underground) in current_turf
-			linked_conveyor.linked_conveyor = src
+			//linked_conveyor = locate(/obj/machinery/conveyor/underground) in current_turf
+			//linked_conveyor.linked_conveyor = src
+			entrance = locate(/obj/machinery/conveyor/underground) in current_turf
+			exit = src
+			entrance.entrance = entrance
+			entrance.exit = src
+
 		else if(distance >=  max_distance)
 			break
 
-/obj/machinery/conveyor/underground/start_conveying(atom/movable/moving)
-
-	if(istype(entrance, /obj/machinery/conveyor/underground))
-		var/datum/move_loop/move/moving_loop = SSmove_manager.processing_on(moving, SSconveyors)
-		if(moving_loop)
-			moving_loop.direction = movedir
-			moving_loop.delay = speed * 1 SECONDS
-			return
-
-		var/static/list/unconveyables = typecacheof(list(/obj/effect, /mob/dead))
-		if(!istype(moving) || is_type_in_typecache(moving, unconveyables) || moving == src)
-			return
-		moving.AddComponent(/datum/component/convey, movedir, speed * 1 SECONDS)
-
-/obj/machinery/conveyor/underground/stop_conveying(atom/movable/thing)
-	if(!ismovable(thing))
+/obj/machinery/conveyor/underground/proc/underground_enter(datum/source, atom/movable/convayable)
+	SIGNAL_HANDLER
+	if(operating == CONVEYOR_OFF)
+		SSmove_manager.stop_looping(convayable, SSconveyors)
 		return
-	SSmove_manager.stop_looping(thing, SSconveyors)
+	convayable.forceMove(src)
+	if(operating == CONVEYOR_FORWARD)
+		do_teleport(src, get_turf(exit), no_effects = TRUE, channel = TELEPORT_CHANNEL_FREE)
+		exit.start_conveying(convayable)
+	else
+		do_teleport(convayable, get_turf(entrance), no_effects = TRUE, channel = TELEPORT_CHANNEL_FREE)
+		entrance.start_conveying(convayable)
 
 /obj/machinery/conveyor/underground/auto
 	processing_flags = START_PROCESSING_ON_INIT
