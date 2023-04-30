@@ -44,13 +44,17 @@
 /obj/structure/plaque/static_plaque/golden/commission/delta
 	desc = "Spinward Sector Station SS-13\n'Delta' Class Outpost\nCommissioned 17/12/2556\n'Efficiency Through Redundancy'"
 
-// Kilostation: added Nov 13, 2019 (#46968)
-/obj/structure/plaque/static_plaque/golden/commission/kilo
-	desc = "Spinward Sector Station SS-13\n'Kilo' Class Outpost\nCommissioned 13/11/2559\n'Forever Different'"
-
 // Tramstation: added Mar 11, 2021 (#56509)
 /obj/structure/plaque/static_plaque/golden/commission/tram
 	desc = "Spinward Sector Station SS-13\n'Tram' Class Outpost\nCommissioned 11/03/2561\n'Making Moves'"
+
+// North Star: added Apr 13, 2023 (#74371)
+/obj/structure/plaque/static_plaque/golden/commission/northstar
+	desc = "Spinward Sector Ship SS-13\n'North Star' Class Vessel\nCommissioned 13/04/2563\n'New Opportunities'"
+
+// Birdshot: added Apr 29, 2023 (#74371)
+/obj/structure/plaque/static_plaque/golden/commission/birdshot
+	desc = "Spinward Sector Station SS-13\n'Birdshot' Class Outpost\nCommissioned 29/04/2563\n'Shooting for the Stars'"
 
 //Removed stations
 
@@ -90,6 +94,10 @@
 /obj/structure/plaque/static_plaque/golden/commission/efficiency
 	desc = "Spinward Sector Station SS-07\n'Efficiency' Class Outpost\nCommissioned 28/01/2556\nDecommissioned 20/12/2556\n'Work Smarter, Not Harder'"
 
+// Kilostation: added Nov 13, 2019 (#46968), removed
+/obj/structure/plaque/static_plaque/golden/commission/kilo
+	desc = "Spinward Sector Station SS-13\n'Kilo' Class Outpost\nCommissioned 13/11/2559\nDecommissioned \n'Forever Different'"
+
 // Ministation: added Jan 29, 2014 (7a76e9456b782e6626bf81e27a912d8232c76b18), removed Dec 27, 2016 (#22453)- 2 years, 10 months, 28 days
 /obj/structure/plaque/static_plaque/golden/commission/mini
 	desc = "Spinward Sector Station SS-08\n'Mini' Class Outpost\nCommissioned 29/01/2554\nDecommissioned 27/12/2556\n'The Littlest Station'"
@@ -118,6 +126,10 @@
 	desc = "Next to the extremely long list of names and job titles, there is a drawing of a little child. The child appears to be disabled. Beneath the image, someone has scratched the word \"PACKETS\"."
 	icon_state = "kiddieplaque"
 
+/obj/structure/sign/plaques/kiddie/devils_tooth
+	name = "\improper Devil's Tooth Plaque"
+	desc = "A plaque commemorating the fallen souls who had to die tunneling out this segment of the frozen ice planet that surrounds it. It's named \"Devil's Tooth\" because those who laid down their life here surely thought they were in hell."
+
 /obj/structure/sign/plaques/kiddie/badger
 	name = "\improper Remembrance Plaque"
 	desc = "A plaque commemorating the fallen, may they rest in peace, forever asleep amongst the stars. Someone has drawn a picture of a crying badger at the bottom."
@@ -133,3 +145,19 @@
 /obj/structure/sign/plaques/kiddie/perfect_drone
 	name = "\improper 'Perfect Drone' sign"
 	desc = "A guide to the drone shell dispenser, detailing the constructive and destructive applications of modern repair drones, as well as the development of the incorruptible cyborg servants of tomorrow, available today."
+
+/obj/structure/sign/plaques/kiddie/gameoflife
+	name = "\improper Conway's The Game Of Life plaque"
+	desc = "A plaque detailing the historical significance of The Game Of Life in the field of computer science, and that the mural underfoot is a representation of the game in action."
+
+/obj/structure/sign/plaques/tram
+	name = "\improper tram information plate"
+	desc = "A plate showing details from the manufacturer about this Nakamura Engineering SkyyTram Mk IV, serial number LT304TG2563.<br><br>We are not responsible for any injuries or fatalities caused by usage of the tram. \
+	Using the tram carries inherent risks, and we cannot guarantee the safety of all passengers. By using the tram, you assume, acknowledge, and accept all the risks and responsibilities. <br><br>\
+	Please be aware that riding the tram can cause a variety of injuries, including but not limited to: slips, trips, and falls; collisions with other passengers or objects; strains, sprains, and other musculoskeletal injuries; \
+	cuts, bruises, and lacerations; and more severe injuries such as head trauma, spinal cord injuries, and even death. These injuries can be caused by a variety of factors, including the movements of the tram, the behaviour \
+	of other passengers, and unforeseen circumstances such as foul play or mechanical issues.<br><br>\
+	By entering the tram, guideway, or crossings you agree Nanotrasen is not liable for any injuries, damages, or losses that may occur. If you do not agree to these terms, please do not use the tram.<br>"
+	icon_state = "commission_tram"
+	custom_materials = list(/datum/material/titanium = 2000)
+	plane = FLOOR_PLANE

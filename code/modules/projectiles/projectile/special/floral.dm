@@ -3,8 +3,7 @@
 	icon_state = "energy"
 	damage = 0
 	damage_type = TOX
-	nodamage = TRUE
-	flag = ENERGY
+	armor_flag = ENERGY
 
 /obj/projectile/energy/floramut/on_hit(atom/target, blocked = FALSE)
 	. = ..()
@@ -12,7 +11,7 @@
 		var/mob/living/L = target
 		if(L.mob_biotypes & MOB_PLANT)
 			if(prob(15))
-				L.rad_act(rand(30, 80))
+				L.adjustToxLoss(rand(3, 6))
 				L.Paralyze(100)
 				L.visible_message(span_warning("[L] writhes in pain as [L.p_their()] vacuoles boil."), span_userdanger("You writhe in pain as your vacuoles boil!"), span_hear("You hear the crunching of leaves."))
 				if(iscarbon(L) && L.has_dna())
@@ -33,8 +32,7 @@
 	icon_state = "energy2"
 	damage = 0
 	damage_type = TOX
-	nodamage = TRUE
-	flag = ENERGY
+	armor_flag = ENERGY
 
 /obj/projectile/energy/florayield/on_hit(atom/target, blocked = FALSE)
 	. = ..()
@@ -48,8 +46,7 @@
 	icon_state = "energy3"
 	damage = 0
 	damage_type = TOX
-	nodamage = TRUE
-	flag = ENERGY
+	armor_flag = ENERGY
 
 /obj/projectile/energy/florarevolution/on_hit(atom/target, blocked = FALSE)
 	. = ..()
@@ -57,6 +54,6 @@
 		var/mob/living/L = target
 		if(L.mob_biotypes & MOB_PLANT)
 			L.show_message(span_notice("The radiation beam leaves you feeling disoriented!"))
-			L.Dizzy(15)
+			L.set_dizzy_if_lower(30 SECONDS)
 			L.emote("flip")
 			L.emote("spin")

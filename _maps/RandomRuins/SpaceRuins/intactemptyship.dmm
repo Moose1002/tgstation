@@ -18,16 +18,14 @@
 	},
 /area/ruin/space/has_grav/powered/authorship)
 "e" = (
-/obj/structure/shuttle/engine/propulsion{
+/obj/machinery/power/shuttle_engine/propulsion{
 	dir = 8
 	},
 /turf/template_noop,
 /area/ruin/space/has_grav/powered/authorship)
 "f" = (
-/obj/structure/window/reinforced{
-	dir = 4
-	},
-/obj/structure/shuttle/engine/heater{
+/obj/structure/window/reinforced/spawner/directional/east,
+/obj/machinery/power/shuttle_engine/heater{
 	dir = 8
 	},
 /turf/open/floor/plating/airless,
@@ -67,14 +65,14 @@
 /obj/structure/table/wood,
 /turf/open/floor/mineral/titanium/purple,
 /area/ruin/space/has_grav/powered/authorship)
-"o" = (
-/obj/structure/table/wood,
-/obj/machinery/computer/bookmanagement,
-/turf/open/floor/mineral/titanium/purple,
-/area/ruin/space/has_grav/powered/authorship)
 "p" = (
 /obj/effect/spawner/structure/window/reinforced,
 /turf/open/floor/plating,
+/area/ruin/space/has_grav/powered/authorship)
+"q" = (
+/obj/structure/table/wood,
+/obj/machinery/computer/libraryconsole/bookmanagement,
+/turf/open/floor/mineral/titanium/purple,
 /area/ruin/space/has_grav/powered/authorship)
 "r" = (
 /obj/structure/table/wood,
@@ -90,10 +88,6 @@
 	id = "goonwizship1";
 	name = "Strange Ship Door Button"
 	},
-/turf/open/floor/mineral/titanium/purple,
-/area/ruin/space/has_grav/powered/authorship)
-"t" = (
-/obj/machinery/door/airlock/external/ruin,
 /turf/open/floor/mineral/titanium/purple,
 /area/ruin/space/has_grav/powered/authorship)
 "u" = (
@@ -140,6 +134,10 @@
 /obj/structure/bed,
 /turf/open/floor/mineral/titanium/purple,
 /area/ruin/space/has_grav/powered/authorship)
+"D" = (
+/obj/machinery/door/airlock/external/ruin,
+/turf/open/floor/mineral/titanium/purple,
+/area/ruin/space/has_grav/powered/authorship)
 
 (1,1,1) = {"
 a
@@ -172,7 +170,7 @@ b
 f
 f
 c
-o
+q
 h
 x
 c
@@ -186,7 +184,7 @@ g
 l
 c
 p
-t
+D
 p
 c
 A

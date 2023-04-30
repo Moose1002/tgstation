@@ -18,7 +18,7 @@
 		/obj/item/multitool = 1,
 		/obj/item/clothing/glasses/meson = 1,
 		/obj/item/storage/belt/utility = 1,
-		/obj/item/clothing/head/welding = 1,
+		/obj/item/clothing/head/utility/welding = 1,
 	)
 
 /obj/effect/spawner/random/engineering/tool_advanced
@@ -126,6 +126,7 @@
 	icon_state = "heater"
 	loot = list(
 		/obj/machinery/space_heater = 8,
+		/obj/machinery/shieldgen = 3,
 		/obj/machinery/portable_atmospherics/pump = 1,
 		/obj/machinery/portable_atmospherics/scrubber = 1,
 	)
@@ -133,5 +134,5 @@
 /obj/effect/spawner/random/engineering/tracking_beacon
 	name = "tracking beacon spawner"
 	icon_state = "beacon"
-	spawn_loot_chance = 50
+	spawn_loot_chance = 35
 	loot = list(/obj/item/beacon)

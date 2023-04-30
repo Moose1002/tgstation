@@ -34,15 +34,15 @@
 /obj/structure/bonfire/Initialize(mapload)
 	. = ..()
 	var/static/list/loc_connections = list(
-		COMSIG_ATOM_ENTERED = .proc/on_entered,
+		COMSIG_ATOM_ENTERED = PROC_REF(on_entered),
 	)
 	AddElement(/datum/element/connect_loc, loc_connections)
 
 /obj/structure/bonfire/attackby(obj/item/used_item, mob/living/user, params)
 	if(istype(used_item, /obj/item/stack/rods) && !can_buckle && !grill)
 		var/obj/item/stack/rods/rods = used_item
-		var/choice = input(user, "What would you like to construct?", "Bonfire") as null|anything in list("Stake","Grill")
-		if(!choice)
+		var/choice = tgui_alert(user, "What would you like to construct?", "Bonfire", list("Stake","Grill"))
+		if(isnull(choice))
 			return
 		rods.use(1)
 		switch(choice)
@@ -119,64 +119,63 @@
 
 /obj/structure/bonfire/proc/on_entered(datum/source, atom/movable/entered)
 	SIGNAL_HANDLER
-	if(burning & !grill)
-		bonfire_burn()
+	if(burning)
+		if(!grill)
+			bonfire_burn()
+		return
 
-/obj/structure/bonfire/proc/bonfire_burn(delta_time = 2)
+	//Not currently burning, let's see if we can ignite it.
+	if(isliving(entered))
+		var/mob/living/burning_body = entered
+		if(burning_body.on_fire)
+			start_burning()
+			visible_message(span_notice("[entered] runs over [src], starting its fire!"))
+
+	else if(entered.resistance_flags & ON_FIRE)
+		start_burning()
+		visible_message(span_notice("[entered]'s fire spreads to [src], setting it ablaze!"))
+
+/obj/structure/bonfire/proc/bonfire_burn(seconds_per_tick = 2)
 	var/turf/current_location = get_turf(src)
 	if(!grill)
-		current_location.hotspot_expose(1000, 250 * delta_time, 1)
+		current_location.hotspot_expose(1000, 250 * seconds_per_tick, 1)
 	for(var/burn_target in current_location)
 		if(burn_target == src)
 			continue
 		else if(isliving(burn_target))
 			var/mob/living/burn_victim = burn_target
-			burn_victim.adjust_fire_stacks(BONFIRE_FIRE_STACK_STRENGTH * 0.5 * delta_time)
-			burn_victim.IgniteMob()
-		else if(isobj(burn_target))
-			var/obj/burned_object = burn_target
-			if(grill && isitem(burned_object))
-				var/obj/item/grilled_item = burned_object
-				SEND_SIGNAL(grilled_item, COMSIG_ITEM_GRILLED, src, delta_time) //Not a big fan, maybe make this use fire_act() in the future.
+			burn_victim.adjust_fire_stacks(BONFIRE_FIRE_STACK_STRENGTH * 0.5 * seconds_per_tick)
+			burn_victim.ignite_mob()
+		else
+			var/atom/movable/burned_movable = burn_target
+			if(grill && isitem(burned_movable))
+				var/obj/item/grilled_item = burned_movable
+				SEND_SIGNAL(grilled_item, COMSIG_ITEM_GRILL_PROCESS, src, seconds_per_tick) //Not a big fan, maybe make this use fire_act() in the future.
 				continue
-			burned_object.fire_act(1000, 250 * delta_time)
+			burned_movable.fire_act(1000, 250 * seconds_per_tick)
 
-/obj/structure/bonfire/process(delta_time)
+/obj/structure/bonfire/process(seconds_per_tick)
 	if(!check_oxygen())
 		extinguish()
 		return
-	bonfire_burn(delta_time)
+	bonfire_burn(seconds_per_tick)
 
 /obj/structure/bonfire/extinguish()
-	if(burning)
-		icon_state = "bonfire"
-		burning = FALSE
-		set_light(0)
-		QDEL_NULL(particles)
-		STOP_PROCESSING(SSobj, src)
+	. = ..()
+	if(!burning)
+		return
+	icon_state = "bonfire"
+	burning = FALSE
+	set_light(0)
+	QDEL_NULL(particles)
+	STOP_PROCESSING(SSobj, src)
 
 /obj/structure/bonfire/buckle_mob(mob/living/buckled_mob, force = FALSE, check_loc = TRUE)
 	if(..())
 		buckled_mob.pixel_y += 13
 
-/obj/structure/bonfire/unbuckle_mob(mob/living/buckled_mob, force=FALSE)
+/obj/structure/bonfire/unbuckle_mob(mob/living/buckled_mob, force = FALSE, can_fall = TRUE)
 	if(..())
 		buckled_mob.pixel_y -= 13
 
-/particles/bonfire
-	icon = 'icons/effects/particles/bonfire.dmi'
-	icon_state = "bonfire"
-	width = 100
-	height = 100
-	count = 1000
-	spawning = 4
-	lifespan = 0.7 SECONDS
-	fade = 1 SECONDS
-	grow = -0.01
-	velocity = list(0, 0)
-	position = generator("circle", 0, 16, NORMAL_RAND)
-	drift = generator("vector", list(0, -0.2), list(0, 0.2))
-	gravity = list(0, 0.95)
-	scale = generator("vector", list(0.3, 0.3), list(1,1), NORMAL_RAND)
-	rotation = 30
-	spin = generator("num", -20, 20)
+#undef BONFIRE_FIRE_STACK_STRENGTH

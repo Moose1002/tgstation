@@ -6,12 +6,15 @@
 	armour_penetration = 30
 	wound_bonus = -40
 
+/obj/projectile/bullet/a556/weak //centcom
+	damage = 20
+
 /obj/projectile/bullet/a556/phasic
 	name = "5.56mm phasic bullet"
 	icon_state = "gaussphase"
 	damage = 20
 	armour_penetration = 70
-	pass_flags = PASSTABLE | PASSGLASS | PASSGRILLE | PASSCLOSEDTURF | PASSMACHINE | PASSSTRUCTURE | PASSDOORS
+	projectile_phasing =  PASSTABLE | PASSGLASS | PASSGRILLE | PASSCLOSEDTURF | PASSMACHINE | PASSSTRUCTURE | PASSDOORS
 
 // 7.62 (Nagant Rifle)
 
@@ -21,6 +24,11 @@
 	armour_penetration = 10
 	wound_bonus = -45
 	wound_falloff_tile = 0
+
+/obj/projectile/bullet/a762/surplus
+	name = "7.62 surplus bullet"
+	weak_against_armour = TRUE //this is specifically more important for fighting carbons than fighting noncarbons. Against a simple mob, this is still a full force bullet
+	armour_penetration = 0
 
 /obj/projectile/bullet/a762/enchanted
 	name = "enchanted 7.62 bullet"

@@ -2,7 +2,7 @@
 /obj/item/ammo_box
 	name = "ammo box (null_reference_exception)"
 	desc = "A box of ammo."
-	icon = 'icons/obj/guns/ammo.dmi'
+	icon = 'icons/obj/weapons/guns/ammo.dmi'
 	flags_1 = CONDUCT_1
 	slot_flags = ITEM_SLOT_BELT
 	inhand_icon_state = "syringe_kit"
@@ -23,6 +23,8 @@
 	var/max_ammo = 7
 	///Controls how sprites are updated for the ammo box; see defines in combat.dm: AMMO_BOX_ONE_SPRITE; AMMO_BOX_PER_BULLET; AMMO_BOX_FULL_EMPTY
 	var/multiple_sprites = AMMO_BOX_ONE_SPRITE
+	///For sprite updating, do we use initial(icon_state) or base_icon_state?
+	var/multiple_sprite_use_base = FALSE
 	///String, used for checking if ammo of different types but still fits can fit inside it; generally used for magazines
 	var/caliber
 	///Allows multiple bullets to be loaded in from one click of another box/magazine
@@ -34,6 +36,13 @@
 	///cost of the materials in the magazine/box itself
 	var/list/base_cost
 
+	/// If this and ammo_band_icon aren't null, run update_ammo_band(). Is the color of the band, such as blue on the detective's Iceblox.
+	var/ammo_band_color
+	/// If this and ammo_band_color aren't null, run update_ammo_band() Is the greyscale icon used for the ammo band.
+	var/ammo_band_icon
+	/// Is the greyscale icon used for the ammo band when it's empty of bullets, only if it's not null.
+	var/ammo_band_icon_empty
+
 /obj/item/ammo_box/Initialize(mapload)
 	. = ..()
 	if(!bullet_cost)
@@ -41,9 +50,10 @@
 		bullet_cost = SSmaterials.FindOrCreateMaterialCombo(custom_materials, 0.9 / max_ammo)
 	if(!start_empty)
 		top_off(starting=TRUE)
+	update_icon_state()
 
 /obj/item/ammo_box/add_weapon_description()
-	AddElement(/datum/element/weapon_description, attached_proc = .proc/add_notes_box)
+	AddElement(/datum/element/weapon_description, attached_proc = PROC_REF(add_notes_box))
 
 /obj/item/ammo_box/proc/add_notes_box()
 	var/list/readout = list()
@@ -75,7 +85,7 @@
 		stack_trace("Tried loading unsupported ammocasing type [load_type] into ammo box [type].")
 		return
 
-	for(var/i = max(1, stored_ammo.len), i <= max_ammo, i++)
+	for(var/i in max(1, stored_ammo.len) to max_ammo)
 		stored_ammo += new round_check(src)
 	update_ammo_count()
 
@@ -132,7 +142,7 @@
 				break
 		if(num_loaded)
 			AM.update_ammo_count()
-	if(istype(A, /obj/item/ammo_casing))
+	if(isammocasing(A))
 		var/obj/item/ammo_casing/AC = A
 		if(give_round(AC, replace_spent))
 			user.transferItemToLoc(AC, src, TRUE)
@@ -173,10 +183,24 @@
 	var/shells_left = LAZYLEN(stored_ammo)
 	switch(multiple_sprites)
 		if(AMMO_BOX_PER_BULLET)
-			icon_state = "[initial(icon_state)]-[shells_left]"
+			icon_state = "[multiple_sprite_use_base ? base_icon_state : initial(icon_state)]-[shells_left]"
 		if(AMMO_BOX_FULL_EMPTY)
-			icon_state = "[initial(icon_state)]-[shells_left ? "[max_ammo]" : "0"]"
+			icon_state = "[multiple_sprite_use_base ? base_icon_state : initial(icon_state)]-[shells_left ? "full" : "empty"]"
+
+	if(ammo_band_color && ammo_band_icon)
+		update_ammo_band()
+
 	return ..()
+
+/obj/item/ammo_box/proc/update_ammo_band()
+	overlays.Cut()
+	var/band_icon = ammo_band_icon
+	if(!(length(stored_ammo)) && ammo_band_icon_empty)
+		band_icon = ammo_band_icon_empty
+	var/image/ammo_band_image = image(icon, src, band_icon)
+	ammo_band_image.color = ammo_band_color
+	ammo_band_image.appearance_flags = RESET_COLOR|KEEP_APART
+	overlays += ammo_band_image
 
 /// Updates the amount of material in this ammo box according to how many bullets are left in it.
 /obj/item/ammo_box/proc/update_custom_materials()
