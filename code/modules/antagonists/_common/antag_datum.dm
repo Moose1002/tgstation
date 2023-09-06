@@ -50,6 +50,8 @@ GLOBAL_LIST_EMPTY(antagonists)
 	var/show_to_ghosts = FALSE
 	/// The typepath for the outfit to show in the preview for the preferences menu.
 	var/preview_outfit
+	/// Flags for antags to turn on or off and check!
+	var/antag_flags = FLAG_ANTAG_CAN_BE_INDUCTED
 
 	//ANTAG UI
 
@@ -153,20 +155,20 @@ GLOBAL_LIST_EMPTY(antagonists)
 	return TRUE
 
 /datum/antagonist/proc/can_be_owned(datum/mind/new_owner)
-	. = TRUE
 	var/datum/mind/tested = new_owner || owner
 	if(tested.has_antag_datum(type))
 		return FALSE
 	for(var/datum/antagonist/badguy as anything in tested.antag_datums)
 		if(is_type_in_typecache(src, badguy.typecache_datum_blacklist))
 			return FALSE
+	return TRUE
 
 //This will be called in add_antag_datum before owner assignment.
 //Should return antag datum without owner.
 /datum/antagonist/proc/specialization(datum/mind/new_owner)
 	return src
 
-///Called by the transfer_to() mind proc after the mind (mind.current and new_character.mind) has moved but before the player (key and client) is transfered.
+///Called by the transfer_to() mind proc after the mind (mind.current and new_character.mind) has moved but before the player (key and client) is transferred.
 /datum/antagonist/proc/on_body_transfer(mob/living/old_body, mob/living/new_body)
 	SHOULD_CALL_PARENT(TRUE)
 	remove_innate_effects(old_body)
@@ -258,8 +260,13 @@ GLOBAL_LIST_EMPTY(antagonists)
  */
 /datum/antagonist/proc/is_banned(mob/player)
 	if(!player)
+		stack_trace("Called is_banned without a mob. This shouldn't happen.")
 		return FALSE
-	. = (is_banned_from(player.ckey, list(ROLE_SYNDICATE, job_rank)) || QDELETED(player))
+
+	if(!player.ckey)
+		return FALSE
+
+	return (is_banned_from(player.ckey, list(ROLE_SYNDICATE, job_rank)) || QDELETED(player))
 
 /**
  * Proc that replaces a player who cannot play a specific antagonist due to being banned via a poll, and alerts the player of their being on the banlist.
