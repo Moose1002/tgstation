@@ -4,7 +4,7 @@
 	name = "Rapid Conveyor Dispenser"
 	desc = "A device used to rapidly place non-controllable conveyors."
 	icon = 'icons/obj/tools.dmi'
-	icon_state = "rpd"
+	icon_state = "rbd"
 	worn_icon_state = "RPD"
 	lefthand_file = 'icons/mob/inhands/equipment/tools_lefthand.dmi'
 	righthand_file = 'icons/mob/inhands/equipment/tools_righthand.dmi'
@@ -32,6 +32,7 @@
 /obj/item/construction/rbd/attack_self(mob/user)
 	. = ..()
 	conveyor_direction = turn(conveyor_direction, -45)
+	dir = conveyor_direction
 	balloon_alert(user, "facing [dir2text(conveyor_direction)]")
 
 /obj/item/construction/rbd/pre_attack(atom/target, mob/user, params)
