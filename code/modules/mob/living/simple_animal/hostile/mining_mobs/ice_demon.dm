@@ -1,7 +1,7 @@
 /mob/living/simple_animal/hostile/asteroid/ice_demon
 	name = "demonic watcher"
 	desc = "A creature formed entirely out of ice, bluespace energy emanates from inside of it."
-	icon = 'icons/mob/icemoon/icemoon_monsters.dmi'
+	icon = 'icons/mob/simple/icemoon/icemoon_monsters.dmi'
 	icon_state = "ice_demon"
 	icon_living = "ice_demon"
 	icon_dead = "ice_demon_dead"
@@ -11,7 +11,7 @@
 	speak_emote = list("telepathically cries")
 	speed = 2
 	move_to_delay = 2
-	projectiletype = /obj/projectile/temp/basilisk/ice
+	projectiletype = /obj/projectile/temp/ice_demon
 	projectilesound = 'sound/weapons/pierce.ogg'
 	ranged = TRUE
 	ranged_message = "manifests ice"
@@ -35,8 +35,8 @@
 	del_on_death = TRUE
 	loot = list()
 	crusher_loot = /obj/item/crusher_trophy/watcher_wing/ice_wing
-	deathmessage = "fades as the energies that tied it to this world dissipate."
-	deathsound = 'sound/magic/demon_dies.ogg'
+	death_message = "fades as the energies that tied it to this world dissipate."
+	death_sound = 'sound/magic/demon_dies.ogg'
 	stat_attack = HARD_CRIT
 	robust_searching = TRUE
 	footstep_type = FOOTSTEP_MOB_CLAW
@@ -47,13 +47,16 @@
 	. = ..()
 	AddElement(/datum/element/simple_flying)
 
-/obj/projectile/temp/basilisk/ice
+/obj/projectile/temp/ice_demon
 	name = "ice blast"
+	icon_state = "ice_2"
 	damage = 5
-	speed = 4
-	nodamage = FALSE
+	damage_type = BURN
+	armor_flag = ENERGY
+	speed = 1
+	pixel_speed_multiplier = 0.25
+	range = 200
 	temperature = -75
-	slowdown = FALSE
 
 /mob/living/simple_animal/hostile/asteroid/ice_demon/OpenFire()
 	ranged_cooldown = world.time + ranged_cooldown_time
@@ -71,9 +74,6 @@
 	do_teleport(src, end, 0,  channel=TELEPORT_CHANNEL_BLUESPACE, forced = TRUE)
 	SLEEP_CHECK_DEATH(8, src)
 	return ..()
-
-/mob/living/simple_animal/hostile/asteroid/ice_demon/spawn_crusher_loot()
-	loot += crusher_loot
 
 /mob/living/simple_animal/hostile/asteroid/ice_demon/death(gibbed)
 	move_force = MOVE_FORCE_DEFAULT

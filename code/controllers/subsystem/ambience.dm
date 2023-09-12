@@ -22,7 +22,7 @@ SUBSYSTEM_DEF(ambience)
 
 		//Check to see if the client exists and isn't held by a new player
 		var/mob/client_mob = client_iterator?.mob
-		if(isnull(client_iterator) || !client_mob ||isnewplayer(client_mob))
+		if(isnull(client_iterator) || !client_mob || isnewplayer(client_mob))
 			ambience_listening_clients -= client_iterator
 			client_old_areas -= client_iterator
 			continue
@@ -38,7 +38,7 @@ SUBSYSTEM_DEF(ambience)
 			if(!(current_area.forced_ambience && (client_old_areas?[client_iterator] != current_area) && prob(5)))
 				continue
 
-		//Run play_ambience() on the client-mob, and set it's ambience cooldown relative to the length of the sound played.
+		//Run play_ambience() on the client-mob and set a cooldown
 		ambience_listening_clients[client_iterator] = world.time + current_area.play_ambience(client_mob)
 
 		//We REALLY don't want runtimes in SSambience
@@ -49,18 +49,12 @@ SUBSYSTEM_DEF(ambience)
 			return
 
 ///Attempts to play an ambient sound to a mob, returning the cooldown in deciseconds
-/area/proc/play_ambience(mob/M, sound/override_sound, volume)
-	var/turf/T = get_turf(M)
+/area/proc/play_ambience(mob/M, sound/override_sound, volume = 27)
 	var/sound/new_sound = override_sound || pick(ambientsounds)
-	new_sound = sound(new_sound, channel = CHANNEL_AMBIENCE)
-	M.playsound_local(T,
-		new_sound,
-		volume ? volume : 33,
-		TRUE,
-		channel = CHANNEL_AMBIENCE
-	)
+	new_sound = sound(new_sound, repeat = 0, wait = 0, volume = volume, channel = CHANNEL_AMBIENCE)
+	SEND_SOUND(M, new_sound)
 
-	return rand(min_ambience_cooldown, max_ambience_cooldown) + (new_sound.len * 10) //Convert to deciseconds
+	return rand(min_ambience_cooldown, max_ambience_cooldown)
 
 /datum/controller/subsystem/ambience/proc/remove_ambience_client(client/to_remove)
 	ambience_listening_clients -= to_remove
@@ -75,8 +69,8 @@ SUBSYSTEM_DEF(ambience)
 	var/static/list/minecraft_cave_noises = list(
 		'sound/machines/airlock.ogg',
 		'sound/effects/snap.ogg',
-		'sound/effects/clownstep1.ogg',
-		'sound/effects/clownstep2.ogg',
+		'sound/effects/footstep/clownstep1.ogg',
+		'sound/effects/footstep/clownstep2.ogg',
 		'sound/items/welder.ogg',
 		'sound/items/welder2.ogg',
 		'sound/items/crowbar.ogg',

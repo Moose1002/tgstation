@@ -4,18 +4,22 @@
 	max_total_storage = 50
 	rustle_sound = FALSE
 
-/datum/storage/pockets/attempt_insert(datum/source, obj/item/to_insert, mob/user, override, force)
+/datum/storage/pockets/attempt_insert(obj/item/to_insert, mob/user, override, force)
 	. = ..()
+	if(!.)
+		return
 
 	var/obj/item/resolve_parent = parent?.resolve()
 	if(!resolve_parent)
 		return
 
-	if(. && silent && !override)
-		if(quickdraw)
-			to_chat(user, span_notice("You discreetly slip [to_insert] into [resolve_parent]. Right-click [resolve_parent] to remove it."))
-		else
-			to_chat(user, span_notice("You discreetly slip [to_insert] into [resolve_parent]."))
+	if(!silent || override)
+		return
+
+	if(quickdraw)
+		to_chat(user, span_notice("You discreetly slip [to_insert] into [resolve_parent]. Right-click [resolve_parent] to remove it."))
+	else
+		to_chat(user, span_notice("You discreetly slip [to_insert] into [resolve_parent]."))
 
 /datum/storage/pockets/small
 	max_slots = 1
@@ -55,9 +59,9 @@
 
 /datum/storage/pockets/chefhat/can_insert(obj/item/to_insert, mob/user, messages, force)
 	. = ..()
-	if(istype(to_insert, /obj/item/clothing/head/mob_holder))
+	if(ispickedupmob(to_insert))
 		var/obj/item/clothing/head/mob_holder/mausholder = to_insert
-		if(locate(/mob/living/simple_animal/mouse) in mausholder.contents)
+		if(locate(/mob/living/basic/mouse) in mausholder.contents)
 			return
 		return FALSE
 
@@ -71,11 +75,14 @@
 	. = ..()
 	set_holdable(list(
 		/obj/item/knife,
+		/obj/item/spess_knife,
 		/obj/item/switchblade,
+		/obj/item/boxcutter,
 		/obj/item/pen,
 		/obj/item/scalpel,
-		/obj/item/reagent_containers/syringe,
 		/obj/item/dnainjector,
+		/obj/item/reagent_containers/syringe,
+		/obj/item/reagent_containers/pill,
 		/obj/item/reagent_containers/hypospray/medipen,
 		/obj/item/reagent_containers/dropper,
 		/obj/item/implanter,
@@ -84,16 +91,19 @@
 		/obj/item/firing_pin,
 		/obj/item/suppressor,
 		/obj/item/ammo_box/magazine/m9mm,
+		/obj/item/ammo_box/magazine/m10mm,
 		/obj/item/ammo_box/magazine/m45,
+		/obj/item/ammo_box/magazine/toy/pistol,
 		/obj/item/ammo_casing,
 		/obj/item/lipstick,
 		/obj/item/clothing/mask/cigarette,
 		/obj/item/lighter,
 		/obj/item/match,
 		/obj/item/holochip,
-		/obj/item/toy/crayon),
+		/obj/item/toy/crayon,
+		/obj/item/reagent_containers/cup/glass/flask),
 		list(/obj/item/screwdriver/power,
-		/obj/item/ammo_casing/caseless/rocket,
+		/obj/item/ammo_casing/rocket,
 		/obj/item/clothing/mask/cigarette/pipe,
 		/obj/item/toy/crayon/spraycan)
 		)
@@ -102,6 +112,7 @@
 	. = ..()
 	set_holdable(list(
 		/obj/item/knife,
+		/obj/item/spess_knife,
 		/obj/item/switchblade,
 		/obj/item/pen,
 		/obj/item/scalpel,
@@ -115,6 +126,7 @@
 		/obj/item/firing_pin,
 		/obj/item/suppressor,
 		/obj/item/ammo_box/magazine/m9mm,
+		/obj/item/ammo_box/magazine/m10mm,
 		/obj/item/ammo_box/magazine/m45,
 		/obj/item/ammo_casing,
 		/obj/item/lipstick,
@@ -123,9 +135,10 @@
 		/obj/item/match,
 		/obj/item/holochip,
 		/obj/item/toy/crayon,
-		/obj/item/bikehorn),
+		/obj/item/bikehorn,
+		/obj/item/reagent_containers/cup/glass/flask),
 		list(/obj/item/screwdriver/power,
-		/obj/item/ammo_casing/caseless/rocket,
+		/obj/item/ammo_casing/rocket,
 		/obj/item/clothing/mask/cigarette/pipe,
 		/obj/item/toy/crayon/spraycan)
 		)
@@ -151,10 +164,10 @@
 
 /datum/storage/pockets/helmet/New()
 	. = ..()
-	set_holdable(list(/obj/item/reagent_containers/food/drinks/bottle/vodka,
-					  /obj/item/reagent_containers/food/drinks/bottle/molotov,
-					  /obj/item/reagent_containers/food/drinks/drinkingglass,
-					  /obj/item/ammo_box/a762))
+	set_holdable(list(/obj/item/reagent_containers/cup/glass/bottle/vodka,
+					  /obj/item/reagent_containers/cup/glass/bottle/molotov,
+					  /obj/item/reagent_containers/cup/glass/drinkingglass,
+					  /obj/item/ammo_box/strilka310))
 
 
 /datum/storage/pockets/void_cloak
@@ -165,7 +178,7 @@
 /datum/storage/pockets/void_cloak/New()
 	. = ..()
 	set_holdable(list(
-		/obj/item/ammo_box/a762/lionhunter,
+		/obj/item/ammo_box/strilka310/lionhunter,
 		/obj/item/bodypart, // Bodyparts are often used in rituals. They're also often normal sized, so you can only fit one.
 		/obj/item/clothing/neck/eldritch_amulet,
 		/obj/item/clothing/neck/heretic_focus,
@@ -175,7 +188,7 @@
 		/obj/item/melee/rune_carver,
 		/obj/item/melee/sickly_blade, // Normal sized, so you can only fit one.
 		/obj/item/organ, // Organs are also often used in rituals.
-		/obj/item/reagent_containers/glass/beaker/eldritch,
+		/obj/item/reagent_containers/cup/beaker/eldritch,
 	))
 
 	var/static/list/exception_cache = typecacheof(list(/obj/item/bodypart, /obj/item/melee/sickly_blade))

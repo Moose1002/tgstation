@@ -85,21 +85,18 @@
 		/obj/structure/tank_holder/extinguisher/advanced = 1,
 	)
 
+
 /obj/effect/spawner/random/structure/crate_empty
 	name = "empty crate spawner"
 	icon_state = "crate"
-	loot = list(
-		/obj/structure/closet/crate = 20,
-		/obj/structure/closet/crate/wooden = 1,
-		/obj/structure/closet/crate/internals = 1,
-		/obj/structure/closet/crate/medical = 1,
-		/obj/structure/closet/crate/freezer = 1,
-		/obj/structure/closet/crate/radiation = 1,
-		/obj/structure/closet/crate/hydroponics = 1,
-		/obj/structure/closet/crate/engineering = 1,
-		/obj/structure/closet/crate/engineering/electrical = 1,
-		/obj/structure/closet/crate/science = 1,
-	)
+	loot = RANDOM_CRATE_LOOT
+
+/obj/effect/spawner/random/structure/crate_empty/make_item(spawn_loc, type_path_to_make)
+	var/obj/structure/closet/crate/peek_a_boo = ..()
+	if(istype(peek_a_boo) && prob(50))
+		peek_a_boo.open(special_effects = FALSE) //the crate appears immediatly out of thin air so no need to animate anything
+
+	return peek_a_boo
 
 /obj/effect/spawner/random/structure/crate_loot
 	name = "lootcrate spawner"
@@ -127,6 +124,13 @@
 		/obj/structure/closet/acloset = 1,
 	)
 
+/obj/effect/spawner/random/structure/closet_empty/make_item(spawn_loc, type_path_to_make)
+	var/obj/structure/closet/peek_a_boo = ..()
+	if(istype(peek_a_boo) && prob(50))
+		peek_a_boo.open(special_effects = FALSE) //the crate appears immediatly out of thin air so no need to animate anything
+
+	return peek_a_boo
+
 /obj/effect/spawner/random/structure/closet_maintenance
 	name = "maintenance closet spawner"
 	icon_state = "locker"
@@ -138,7 +142,7 @@
 		/obj/structure/closet/l3closet = 1,
 		/obj/structure/closet/radiation = 1,
 		/obj/structure/closet/bombcloset = 1,
-		/obj/structure/closet/mini_fridge = 1,
+		/obj/structure/closet/mini_fridge/grimy = 1,
 	)
 
 /obj/effect/spawner/random/structure/chair_flipped
@@ -184,7 +188,7 @@
 
 /obj/effect/spawner/random/structure/billboard
 	name = "billboard spawner"
-	icon = 'icons/obj/billboard.dmi'
+	icon = 'icons/obj/fluff/billboard.dmi'
 	icon_state = "billboard_random"
 	loot = list(
 		/obj/structure/billboard/azik = 50,
@@ -211,17 +215,17 @@
 /obj/effect/spawner/random/structure/billboard/roadsigns //also pretty much only unifunctionally useful for gas stations
 	name = "\improper Gas Station billboard spawner"
 	loot = list(
-		/obj/structure/billboard/roadsign/two = 25,
-		/obj/structure/billboard/roadsign/twothousand = 25,
-		/obj/structure/billboard/roadsign/twomillion = 25,
-		/obj/structure/billboard/roadsign/error = 25,
+		/obj/structure/billboard/roadsign/two,
+		/obj/structure/billboard/roadsign/twothousand,
+		/obj/structure/billboard/roadsign/twomillion,
+		/obj/structure/billboard/roadsign/error,
 	)
 
 /obj/effect/spawner/random/structure/steam_vent
 	name = "steam vent spawner"
 	loot = list(
-		/obj/structure/steam_vent = 50,
-		/obj/structure/steam_vent/fast = 50,
+		/obj/structure/steam_vent,
+		/obj/structure/steam_vent/fast,
 	)
 
 /obj/effect/spawner/random/structure/musician/piano/random_piano

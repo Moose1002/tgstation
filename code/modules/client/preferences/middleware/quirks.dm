@@ -3,8 +3,8 @@
 	var/tainted = FALSE
 
 	action_delegations = list(
-		"give_quirk" = .proc/give_quirk,
-		"remove_quirk" = .proc/remove_quirk,
+		"give_quirk" = PROC_REF(give_quirk),
+		"remove_quirk" = PROC_REF(remove_quirk),
 	)
 
 /datum/preference_middleware/quirks/get_ui_static_data(mob/user)
@@ -43,7 +43,7 @@
 	return list(
 		"max_positive_quirks" = MAX_QUIRKS,
 		"quirk_info" = quirk_info,
-		"quirk_blacklist" = SSquirks.quirk_blacklist,
+		"quirk_blacklist" = GLOB.quirk_string_blacklist,
 	)
 
 /datum/preference_middleware/quirks/on_new_character(mob/user)

@@ -1,7 +1,6 @@
-#define RULESET_STOP_PROCESSING 1
-
 #define FAKE_GREENSHIFT_FORM_CHANCE 15
 #define FAKE_REPORT_CHANCE 8
+#define PULSAR_REPORT_CHANCE 8
 #define REPORT_NEG_DIVERGENCE -15
 #define REPORT_POS_DIVERGENCE 15
 
@@ -16,6 +15,8 @@ GLOBAL_VAR_INIT(dynamic_stacking_limit, 90)
 GLOBAL_LIST_EMPTY(dynamic_forced_roundstart_ruleset)
 // Forced threat level, setting this to zero or higher forces the roundstart threat to the value.
 GLOBAL_VAR_INIT(dynamic_forced_threat_level, -1)
+/// Modify the threat level for station traits before dynamic can be Initialized. List(instance = threat_reduction)
+GLOBAL_LIST_EMPTY(dynamic_station_traits)
 
 /datum/game_mode/dynamic
 	// Threat logging vars
@@ -56,7 +57,8 @@ GLOBAL_VAR_INIT(dynamic_forced_threat_level, -1)
 	var/list/current_rules = list()
 	/// List of executed rulesets.
 	var/list/executed_rules = list()
-	/// When TRUE GetInjectionChance returns 100.
+	/// If TRUE, the next player to latejoin will guarantee roll for a random latejoin antag
+	/// (this does not guarantee they get said antag roll, depending on preferences and circumstances)
 	var/forced_injection = FALSE
 	/// Forced ruleset to be executed for the next latejoin.
 	var/datum/dynamic_ruleset/latejoin/forced_latejoin_rule = null
@@ -136,7 +138,7 @@ GLOBAL_VAR_INIT(dynamic_forced_threat_level, -1)
 	/// What is the higher bound of when the roundstart annoucement is sent out?
 	var/waittime_h = 1800
 
-	/// Maximum amount of threat allowed to generate.
+	/// A number between 0 and 100. The maximum amount of threat allowed to generate.
 	var/max_threat_level = 100
 
 	/// The extra chance multiplier that a heavy impact midround ruleset will run next time.
@@ -191,23 +193,23 @@ GLOBAL_VAR_INIT(dynamic_forced_threat_level, -1)
 
 /datum/game_mode/dynamic/admin_panel()
 	var/list/dat = list("<html><head><meta http-equiv='Content-Type' content='text/html; charset=UTF-8'><title>Game Mode Panel</title></head><body><h1><B>Game Mode Panel</B></h1>")
-	dat += "Dynamic Mode <a href='?_src_=vars;[HrefToken()];Vars=[REF(src)]'>\[VV\]</a> <a href='?src=\ref[src];[HrefToken()]'>\[Refresh\]</a><BR>"
+	dat += "Dynamic Mode <a href='?_src_=vars;[HrefToken()];Vars=[REF(src)]'>\[VV\]</a> <a href='?src=[text_ref(src)];[HrefToken()]'>\[Refresh\]</a><BR>"
 	dat += "Threat Level: <b>[threat_level]</b><br/>"
 	dat += "Budgets (Roundstart/Midrounds): <b>[initial_round_start_budget]/[threat_level - initial_round_start_budget]</b><br/>"
 
-	dat += "Midround budget to spend: <b>[mid_round_budget]</b> <a href='?src=\ref[src];[HrefToken()];adjustthreat=1'>\[Adjust\]</A> <a href='?src=\ref[src];[HrefToken()];threatlog=1'>\[View Log\]</a><br/>"
+	dat += "Midround budget to spend: <b>[mid_round_budget]</b> <a href='?src=[text_ref(src)];[HrefToken()];adjustthreat=1'>\[Adjust\]</A> <a href='?src=[text_ref(src)];[HrefToken()];threatlog=1'>\[View Log\]</a><br/>"
 	dat += "<br/>"
 	dat += "Parameters: centre = [threat_curve_centre] ; width = [threat_curve_width].<br/>"
 	dat += "Split parameters: centre = [roundstart_split_curve_centre] ; width = [roundstart_split_curve_width].<br/>"
-	dat += "<i>On average, <b>[peaceful_percentage]</b>% of the rounds are more peaceful.</i><br/>"
-	dat += "Forced extended: <a href='?src=\ref[src];[HrefToken()];forced_extended=1'><b>[GLOB.dynamic_forced_extended ? "On" : "Off"]</b></a><br/>"
-	dat += "No stacking (only one round-ender): <a href='?src=\ref[src];[HrefToken()];no_stacking=1'><b>[GLOB.dynamic_no_stacking ? "On" : "Off"]</b></a><br/>"
-	dat += "Stacking limit: [GLOB.dynamic_stacking_limit] <a href='?src=\ref[src];[HrefToken()];stacking_limit=1'>\[Adjust\]</A>"
+	dat += "<i>On average, <b>[clamp(peaceful_percentage, 1, 99)]</b>% of the rounds are more peaceful.</i><br/>"
+	dat += "Forced extended: <a href='?src=[text_ref(src)];[HrefToken()];forced_extended=1'><b>[GLOB.dynamic_forced_extended ? "On" : "Off"]</b></a><br/>"
+	dat += "No stacking (only one round-ender): <a href='?src=[text_ref(src)];[HrefToken()];no_stacking=1'><b>[GLOB.dynamic_no_stacking ? "On" : "Off"]</b></a><br/>"
+	dat += "Stacking limit: [GLOB.dynamic_stacking_limit] <a href='?src=[text_ref(src)];[HrefToken()];stacking_limit=1'>\[Adjust\]</A>"
 	dat += "<br/>"
-	dat += "<A href='?src=\ref[src];[HrefToken()];force_latejoin_rule=1'>\[Force Next Latejoin Ruleset\]</A><br>"
+	dat += "<A href='?src=[text_ref(src)];[HrefToken()];force_latejoin_rule=1'>\[Force Next Latejoin Ruleset\]</A><br>"
 	if (forced_latejoin_rule)
-		dat += {"<A href='?src=\ref[src];[HrefToken()];clear_forced_latejoin=1'>-> [forced_latejoin_rule.name] <-</A><br>"}
-	dat += "<A href='?src=\ref[src];[HrefToken()];force_midround_rule=1'>\[Execute Midround Ruleset\]</A><br>"
+		dat += {"<A href='?src=[text_ref(src)];[HrefToken()];clear_forced_latejoin=1'>-> [forced_latejoin_rule.name] <-</A><br>"}
+	dat += "<A href='?src=[text_ref(src)];[HrefToken()];force_midround_rule=1'>\[Execute Midround Ruleset\]</A><br>"
 	dat += "<br />"
 	dat += "Executed rulesets: "
 	if (executed_rules.len > 0)
@@ -217,13 +219,13 @@ GLOBAL_VAR_INIT(dynamic_forced_threat_level, -1)
 	else
 		dat += "none.<br>"
 	dat += "<br>Injection Timers: (<b>[get_heavy_midround_injection_chance(dry_run = TRUE)]%</b> heavy midround chance)<BR>"
-	dat += "Latejoin: [DisplayTimeText(latejoin_injection_cooldown-world.time)] <a href='?src=\ref[src];[HrefToken()];injectlate=1'>\[Now!\]</a><BR>"
+	dat += "Latejoin: [DisplayTimeText(latejoin_injection_cooldown-world.time)] <a href='?src=[text_ref(src)];[HrefToken()];injectlate=1'>\[Now!\]</a><BR>"
 
 	var/next_injection = next_midround_injection()
 	if (next_injection == INFINITY)
 		dat += "All midrounds have been exhausted."
 	else
-		dat += "Midround: [DisplayTimeText(next_injection - world.time)] <a href='?src=\ref[src];[HrefToken()];injectmid=1'>\[Now!\]</a><BR>"
+		dat += "Midround: [DisplayTimeText(next_injection - world.time)] <a href='?src=[text_ref(src)];[HrefToken()];injectmid=1'>\[Now!\]</a><BR>"
 
 	usr << browse(dat.Join(), "window=gamemode_panel;size=500x500")
 
@@ -264,7 +266,7 @@ GLOBAL_VAR_INIT(dynamic_forced_threat_level, -1)
 			return
 		forced_latejoin_rule = added_rule
 		log_admin("[key_name(usr)] set [added_rule] to proc on the next latejoin.")
-		message_admins("[key_name(usr)] set [added_rule] to proc on the next latejoin.")
+		message_admins("[key_name(usr)] set [added_rule] to proc on the next valid latejoin.")
 	else if(href_list["clear_forced_latejoin"])
 		forced_latejoin_rule = null
 		log_admin("[key_name(usr)] cleared the forced latejoin ruleset.")
@@ -290,39 +292,20 @@ GLOBAL_VAR_INIT(dynamic_forced_threat_level, -1)
 	// If it got to this part, just pick one high impact ruleset if it exists
 	for(var/datum/dynamic_ruleset/rule in executed_rules)
 		if(rule.flags & HIGH_IMPACT_RULESET)
-			return rule.round_result()
+			rule.round_result()
+			// One was set, so we're done here
+			if(SSticker.news_report)
+				return
+
 	return ..()
 
 /datum/game_mode/dynamic/proc/send_intercept()
-	. = "<b><i>Central Command Status Summary</i></b><hr>"
-	switch(round(shown_threat))
-		if(0 to 19)
-			var/show_core_territory = (GLOB.current_living_antags.len > 0)
-			if (prob(FAKE_GREENSHIFT_FORM_CHANCE))
-				show_core_territory = !show_core_territory
+	if(SScommunications.block_command_report) //If we don't want the report to be printed just yet, we put it off until it's ready
+		addtimer(CALLBACK(src, PROC_REF(send_intercept)), 10 SECONDS)
+		return
 
-			if (show_core_territory)
-				. += "<b>Core Territory</b></center><BR>"
-				. += "Your station orbits within reliably mundane, secure space. Although Nanotrasen has a firm grip on security in your region, the valuable resources and strategic position aboard your station make it a potential target for infiltrations. Monitor crew for non-loyal behavior, but expect a relatively tame shift free of large-scale destruction. We expect great things from your station."
-			else
-				. += "<b>Peaceful Waypoint</b></center><BR>"
-				. += "Your station orbits deep within controlled, core-sector systems and serves as a waypoint for routine traffic through Nanotrasen's trade empire. Due to the combination of high security, interstellar traffic, and low strategic value, it makes any direct threat of violence unlikely. Your primary enemies will be incompetence and bored crewmen: try to organize team-building events to keep staffers interested and productive."
-		if(20 to 39)
-			. += "<b>Anomalous Exogeology</b></center><BR>"
-			. += "Although your station lies within what is generally considered Nanotrasen-controlled space, the course of its orbit has caused it to cross unusually close to exogeological features with anomalous readings. Although these features offer opportunities for our research department, it is known that these little understood readings are often correlated with increased activity from competing interstellar organizations and individuals, among them the Wizard Federation and Cult of the Geometer of Blood - all known competitors for Anomaly Type B sites. Exercise elevated caution."
-		if(40 to 65)
-			. += "<b>Contested System</b></center><BR>"
-			. += "Your station's orbit passes along the edge of Nanotrasen's sphere of influence. While subversive elements remain the most likely threat against your station, hostile organizations are bolder here, where our grip is weaker. Exercise increased caution against elite Syndicate strike forces, or Executives forbid, some kind of ill-conceived unionizing attempt."
-		if(66 to 79)
-			. += "<b>Uncharted Space</b></center><BR>"
-			. += "Congratulations and thank you for participating in the NT 'Frontier' space program! Your station is actively orbiting a high value system far from the nearest support stations. Little is known about your region of space, and the opportunity to encounter the unknown invites greater glory. You are encouraged to elevate security as necessary to protect Nanotrasen assets."
-		if(80 to 99)
-			. += "<b>Black Orbit</b></center><BR>"
-			. += "As part of a mandatory security protocol, we are required to inform you that as a result of your orbital pattern directly behind an astrological body (oriented from our nearest observatory), your station will be under decreased monitoring and support. It is anticipated that your extreme location and decreased surveillance could pose security risks. Avoid unnecessary risks and attempt to keep your station in one piece."
-		if(100)
-			. += "<b>Impending Doom</b></center><BR>"
-			. += "Your station is somehow in the middle of hostile territory, in clear view of any enemy of the corporation. Your likelihood to survive is low, and station destruction is expected and almost inevitable. Secure any sensitive material and neutralize any enemy you will come across. It is important that you at least try to maintain the station.<BR>"
-			. += "Good luck."
+	. = "<b><i>Nanotrasen Department of Intelligence Threat Advisory, Spinward Sector, TCD [time2text(world.realtime, "DDD, MMM DD")], [CURRENT_STATION_YEAR]:</i></b><hr>"
+	. += generate_advisory_level()
 
 	var/min_threat = 100
 	for(var/datum/dynamic_ruleset/ruleset as anything in init_rulesets(/datum/dynamic_ruleset))
@@ -334,6 +317,8 @@ GLOBAL_VAR_INIT(dynamic_forced_threat_level, -1)
 	generate_station_goals(greenshift)
 	. += generate_station_goal_report()
 	. += generate_station_trait_report()
+	if(length(SScommunications.command_report_footnotes))
+		. += generate_report_footnote()
 
 	print_command_report(., "Central Command Status Summary", announce=FALSE)
 	if(greenshift)
@@ -342,6 +327,52 @@ GLOBAL_VAR_INIT(dynamic_forced_threat_level, -1)
 		priority_announce("A summary has been copied and printed to all communications consoles.", "Security level elevated.", ANNOUNCER_INTERCEPT)
 		if(SSsecurity_level.get_current_level_as_number() < SEC_LEVEL_BLUE)
 			SSsecurity_level.set_level(SEC_LEVEL_BLUE)
+
+/// Generate the advisory level depending on the shown threat level.
+/datum/game_mode/dynamic/proc/generate_advisory_level()
+	var/advisory_string = ""
+	if (prob(PULSAR_REPORT_CHANCE))
+		if(HAS_TRAIT(SSstation, STATION_TRAIT_BANANIUM_SHIPMENTS))
+			advisory_string += "Advisory Level: <b>Clown Planet</b></center><BR>"
+			advisory_string += "Your sector's advisory level is Clown Planet! Our bike horns have picked up on a large bananium stash. Clowns show a large influx of clowns on your station. We highly advice you to slip any threats to keep Honkotrasen assets within the Banana Sector. The Department advises defending chemistry from any clowns that are trying to make baldium or space lube."
+			return advisory_string
+
+		advisory_string += "Advisory Level: <b>Pulsar Star</b></center><BR>"
+		advisory_string += "Your sector's advisory level is Pulsar Star. A large unknown electromagnetic field has stormed through nearby surveillance equipment. No surveillance data has been able to be obtained showing no credible threats to Nanotrasen assets within the Spinward Sector. The Department advises maintaining high alert against potential threats, regardless of a lack of information."
+		return advisory_string
+
+	switch(round(shown_threat))
+		if(0)
+			advisory_string += "Advisory Level: <b>White Dwarf</b></center><BR>"
+			advisory_string += "Your sector's advisory level is White Dwarf. Our surveillors have ruled out any and all potential risks known in our database, ruling out the loss of our assets in the Spinward Sector. We advise a lower level of security, alongside distributing ressources on potential profit."
+		if(1 to 19)
+			var/show_core_territory = (GLOB.current_living_antags.len > 0)
+			if (prob(FAKE_GREENSHIFT_FORM_CHANCE))
+				show_core_territory = !show_core_territory
+
+			if (show_core_territory)
+				advisory_string += "Advisory Level: <b>Blue Star</b></center><BR>"
+				advisory_string += "Your sector's advisory level is Blue Star. At this threat advisory, the risk of attacks on Nanotrasen assets within the sector is minor, but cannot be ruled out entirely. Remain vigilant."
+			else
+				advisory_string += "Advisory Level: <b>Green Star</b></center><BR>"
+				advisory_string += "Your sector's advisory level is Green Star. Surveillance information shows no credible threats to Nanotrasen assets within the Spinward Sector at this time. As always, the Department advises maintaining vigilance against potential threats, regardless of a lack of known threats."
+		if(20 to 39)
+			advisory_string += "Advisory Level: <b>Yellow Star</b></center><BR>"
+			advisory_string += "Your sector's advisory level is Yellow Star. Surveillance shows a credible risk of enemy attack against our assets in the Spinward Sector. We advise a heightened level of security, alongside maintaining vigilance against potential threats."
+		if(40 to 65)
+			advisory_string += "Advisory Level: <b>Orange Star</b></center><BR>"
+			advisory_string += "Your sector's advisory level is Orange Star. Upon reviewing your sector's intelligence, the Department has determined that the risk of enemy activity is moderate to severe. At this advisory, we recommend maintaining a higher degree of security and alertness, and vigilance against threats that may (or will) arise."
+		if(66 to 79)
+			advisory_string += "Advisory Level: <b>Red Star</b></center><BR>"
+			advisory_string += "Your sector's advisory level is Red Star. The Department of Intelligence has decrypted Cybersun communications suggesting a high likelihood of attacks on Nanotrasen assets within the Spinward Sector. Stations in the region are advised to remain highly vigilant for signs of enemy activity and to be on high alert."
+		if(80 to 99)
+			advisory_string += "Advisory Level: <b>Black Orbit</b></center><BR>"
+			advisory_string += "Your sector's advisory level is Black Orbit. Your sector's local comms network is currently undergoing a blackout, and we are therefore unable to accurately judge enemy movements within the region. However, information passed to us by GDI suggests a high amount of enemy activity in the sector, indicative of an impending attack. Remain on high alert, and as always, we advise remaining vigilant against any other potential threats."
+		if(100)
+			advisory_string += "Advisory Level: <b>Midnight Sun</b></center><BR>"
+			advisory_string += "Your sector's advisory level is Midnight Sun. Credible information passed to us by GDI suggests that the Syndicate is preparing to mount a major concerted offensive on Nanotrasen assets in the Spinward Sector to cripple our foothold there. All stations should remain on high alert and prepared to defend themselves."
+
+	return advisory_string
 
 /datum/game_mode/dynamic/proc/show_threatlog(mob/admin)
 	if(!SSticker.HasRoundStarted())
@@ -363,32 +394,34 @@ GLOBAL_VAR_INIT(dynamic_forced_threat_level, -1)
 
 /// Generates the threat level using lorentz distribution and assigns peaceful_percentage.
 /datum/game_mode/dynamic/proc/generate_threat()
-	var/relative_threat = LORENTZ_DISTRIBUTION(threat_curve_centre, threat_curve_width)
-	threat_level = clamp(round(lorentz_to_amount(relative_threat), 0.1), 0, max_threat_level)
+	threat_level = lorentz_to_amount(threat_curve_centre, threat_curve_width, max_threat_level)
+
+	for(var/datum/station_trait/station_trait in GLOB.dynamic_station_traits)
+		threat_level = max(threat_level - GLOB.dynamic_station_traits[station_trait], 0)
+		log_dynamic("Threat reduced by [GLOB.dynamic_station_traits[station_trait]]. Source: [type].")
 
 	if (SSticker.totalPlayersReady < low_pop_player_threshold)
 		threat_level = min(threat_level, LERP(low_pop_maximum_threat, max_threat_level, SSticker.totalPlayersReady / low_pop_player_threshold))
 
-	peaceful_percentage = round(LORENTZ_CUMULATIVE_DISTRIBUTION(relative_threat, threat_curve_centre, threat_curve_width), 0.01)*100
+	peaceful_percentage = (threat_level/max_threat_level)*100
 
 /// Generates the midround and roundstart budgets
 /datum/game_mode/dynamic/proc/generate_budgets()
-	var/relative_round_start_budget_scale = LORENTZ_DISTRIBUTION(roundstart_split_curve_centre, roundstart_split_curve_width)
-	round_start_budget = round((lorentz_to_amount(relative_round_start_budget_scale) / 100) * threat_level, 0.1)
+	round_start_budget = lorentz_to_amount(roundstart_split_curve_centre, roundstart_split_curve_width, threat_level, 0.1)
 	initial_round_start_budget = round_start_budget
 	mid_round_budget = threat_level - round_start_budget
 
 /datum/game_mode/dynamic/proc/setup_parameters()
-	log_game("DYNAMIC: Dynamic mode parameters for the round:")
-	log_game("DYNAMIC: Centre is [threat_curve_centre], Width is [threat_curve_width], Forced extended is [GLOB.dynamic_forced_extended ? "Enabled" : "Disabled"], No stacking is [GLOB.dynamic_no_stacking ? "Enabled" : "Disabled"].")
-	log_game("DYNAMIC: Stacking limit is [GLOB.dynamic_stacking_limit].")
+	log_dynamic("Dynamic mode parameters for the round:")
+	log_dynamic("Centre is [threat_curve_centre], Width is [threat_curve_width], Forced extended is [GLOB.dynamic_forced_extended ? "Enabled" : "Disabled"], No stacking is [GLOB.dynamic_no_stacking ? "Enabled" : "Disabled"].")
+	log_dynamic("Stacking limit is [GLOB.dynamic_stacking_limit].")
 	if(GLOB.dynamic_forced_threat_level >= 0)
 		threat_level = round(GLOB.dynamic_forced_threat_level, 0.1)
 	else
 		generate_threat()
 	generate_budgets()
 	set_cooldowns()
-	log_game("DYNAMIC: Dynamic Mode initialized with a Threat Level of... [threat_level]! ([round_start_budget] round start budget)")
+	log_dynamic("Dynamic Mode initialized with a Threat Level of... [threat_level]! ([round_start_budget] round start budget)")
 	return TRUE
 
 /datum/game_mode/dynamic/proc/setup_shown_threat()
@@ -413,6 +446,7 @@ GLOBAL_VAR_INIT(dynamic_forced_threat_level, -1)
 						continue
 					vars[variable] = configuration["Dynamic"][variable]
 
+	configure_station_trait_costs()
 	setup_parameters()
 	setup_hijacking()
 	setup_shown_threat()
@@ -427,9 +461,9 @@ GLOBAL_VAR_INIT(dynamic_forced_threat_level, -1)
 		if(player.ready == PLAYER_READY_TO_PLAY && player.mind && player.check_preferences())
 			roundstart_pop_ready++
 			candidates.Add(player)
-	log_game("DYNAMIC: Listing [roundstart_rules.len] round start rulesets, and [candidates.len] players ready.")
+	log_dynamic("Listing [roundstart_rules.len] round start rulesets, and [candidates.len] players ready.")
 	if (candidates.len <= 0)
-		log_game("DYNAMIC: [candidates.len] candidates.")
+		log_dynamic("[candidates.len] candidates.")
 		return TRUE
 
 	if(GLOB.dynamic_forced_roundstart_ruleset.len > 0)
@@ -437,24 +471,24 @@ GLOBAL_VAR_INIT(dynamic_forced_threat_level, -1)
 	else
 		roundstart(roundstart_rules)
 
-	log_game("DYNAMIC: [round_start_budget] round start budget was left, donating it to midrounds.")
+	log_dynamic("[round_start_budget] round start budget was left, donating it to midrounds.")
 	threat_log += "[worldtime2text()]: [round_start_budget] round start budget was left, donating it to midrounds."
 	mid_round_budget += round_start_budget
 
 	var/starting_rulesets = ""
 	for (var/datum/dynamic_ruleset/roundstart/DR in executed_rules)
 		starting_rulesets += "[DR.name], "
-	log_game("DYNAMIC: Picked the following roundstart rules: [starting_rulesets]")
+	log_dynamic("Picked the following roundstart rules: [starting_rulesets]")
 	candidates.Cut()
 	return TRUE
 
 /datum/game_mode/dynamic/post_setup(report)
 	for(var/datum/dynamic_ruleset/roundstart/rule in executed_rules)
 		rule.candidates.Cut() // The rule should not use candidates at this point as they all are null.
-		addtimer(CALLBACK(src, /datum/game_mode/dynamic/.proc/execute_roundstart_rule, rule), rule.delay)
+		addtimer(CALLBACK(src, TYPE_PROC_REF(/datum/game_mode/dynamic/, execute_roundstart_rule), rule), rule.delay)
 
 	if (!CONFIG_GET(flag/no_intercept_report))
-		addtimer(CALLBACK(src, .proc/send_intercept), rand(waittime_l, waittime_h))
+		addtimer(CALLBACK(src, PROC_REF(send_intercept)), rand(waittime_l, waittime_h))
 
 	..()
 
@@ -484,15 +518,16 @@ GLOBAL_VAR_INIT(dynamic_forced_threat_level, -1)
 /// A simple roundstart proc used when dynamic_forced_roundstart_ruleset has rules in it.
 /datum/game_mode/dynamic/proc/rigged_roundstart()
 	message_admins("[GLOB.dynamic_forced_roundstart_ruleset.len] rulesets being forced. Will now attempt to draft players for them.")
-	log_game("DYNAMIC: [GLOB.dynamic_forced_roundstart_ruleset.len] rulesets being forced. Will now attempt to draft players for them.")
+	log_dynamic("[GLOB.dynamic_forced_roundstart_ruleset.len] rulesets being forced. Will now attempt to draft players for them.")
 	for (var/datum/dynamic_ruleset/roundstart/rule in GLOB.dynamic_forced_roundstart_ruleset)
 		configure_ruleset(rule)
 		message_admins("Drafting players for forced ruleset [rule.name].")
-		log_game("DYNAMIC: Drafting players for forced ruleset [rule.name].")
+		log_dynamic("Drafting players for forced ruleset [rule.name].")
 		rule.mode = src
 		rule.acceptable(roundstart_pop_ready, threat_level) // Assigns some vars in the modes, running it here for consistency
 		rule.candidates = candidates.Copy()
 		rule.trim_candidates()
+		rule.load_templates()
 		if (rule.ready(roundstart_pop_ready, TRUE))
 			var/cost = rule.cost
 			var/scaled_times = 0
@@ -504,7 +539,7 @@ GLOBAL_VAR_INIT(dynamic_forced_threat_level, -1)
 
 /datum/game_mode/dynamic/proc/roundstart(list/roundstart_rules)
 	if (GLOB.dynamic_forced_extended)
-		log_game("DYNAMIC: Starting a round of forced extended.")
+		log_dynamic("Starting a round of forced extended.")
 		return TRUE
 	var/list/drafted_rules = list()
 	for (var/datum/dynamic_ruleset/roundstart/rule in roundstart_rules)
@@ -513,6 +548,7 @@ GLOBAL_VAR_INIT(dynamic_forced_threat_level, -1)
 		if (rule.acceptable(roundstart_pop_ready, threat_level) && round_start_budget >= rule.cost) // If we got the population and threat required
 			rule.candidates = candidates.Copy()
 			rule.trim_candidates()
+			rule.load_templates()
 			if (rule.ready(roundstart_pop_ready) && rule.candidates.len > 0)
 				drafted_rules[rule] = rule.weight
 
@@ -524,7 +560,7 @@ GLOBAL_VAR_INIT(dynamic_forced_threat_level, -1)
 	while (round_start_budget_left > 0)
 		var/datum/dynamic_ruleset/roundstart/ruleset = pick_weight(drafted_rules)
 		if (isnull(ruleset))
-			log_game("DYNAMIC: No more rules can be applied, stopping with [round_start_budget] left.")
+			log_dynamic("No more rules can be applied, stopping with [round_start_budget] left.")
 			break
 
 		var/cost = (ruleset in rulesets_picked) ? ruleset.scaling_cost : ruleset.cost
@@ -561,7 +597,7 @@ GLOBAL_VAR_INIT(dynamic_forced_threat_level, -1)
 
 /// Initializes the round start ruleset provided to it. Returns how much threat to spend.
 /datum/game_mode/dynamic/proc/picking_roundstart_rule(datum/dynamic_ruleset/roundstart/ruleset, scaled_times = 0, forced = FALSE)
-	log_game("DYNAMIC: Picked a ruleset: [ruleset.name], scaled [scaled_times] times")
+	log_dynamic("Picked a ruleset: [ruleset.name], scaled [scaled_times] times")
 
 	ruleset.trim_candidates()
 	var/added_threat = ruleset.scale_up(roundstart_pop_ready, scaled_times)
@@ -620,6 +656,7 @@ GLOBAL_VAR_INIT(dynamic_forced_threat_level, -1)
 	var/population = GLOB.alive_player_list.len
 	if((new_rule.acceptable(population, threat_level) && (ignore_cost || new_rule.cost <= mid_round_budget)) || forced)
 		new_rule.trim_candidates()
+		new_rule.load_templates()
 		if (new_rule.ready(forced))
 			if (!ignore_cost)
 				spend_midround_budget(new_rule.cost, threat_log, "[worldtime2text()]: Forced rule [new_rule.name]")
@@ -629,13 +666,13 @@ GLOBAL_VAR_INIT(dynamic_forced_threat_level, -1)
 					high_impact_ruleset_executed = TRUE
 				else if(new_rule.flags & ONLY_RULESET)
 					only_ruleset_executed = TRUE
-				log_game("DYNAMIC: Making a call to a specific ruleset...[new_rule.name]!")
+				log_dynamic("Making a call to a specific ruleset...[new_rule.name]!")
 				executed_rules += new_rule
 				if (new_rule.persistent)
 					current_rules += new_rule
 				return TRUE
 		else if (forced)
-			log_game("DYNAMIC: The ruleset [new_rule.name] couldn't be executed due to lack of elligible players.")
+			log_dynamic("The ruleset [new_rule.name] couldn't be executed due to lack of elligible players.")
 	return FALSE
 
 /datum/game_mode/dynamic/process()
@@ -659,6 +696,7 @@ GLOBAL_VAR_INIT(dynamic_forced_threat_level, -1)
 			for(var/_executed in rule_list)
 				var/datum/executed = _executed
 				if(blocking == executed.type)
+					log_dynamic("FAIL: check_blocking - [blocking] conflicts with [executed.type]")
 					return TRUE
 	return FALSE
 
@@ -669,36 +707,67 @@ GLOBAL_VAR_INIT(dynamic_forced_threat_level, -1)
 		return
 
 	if (forced_latejoin_rule)
-		forced_latejoin_rule.candidates = list(newPlayer)
-		forced_latejoin_rule.trim_candidates()
-		log_game("DYNAMIC: Forcing ruleset [forced_latejoin_rule]")
-		if (forced_latejoin_rule.ready(TRUE))
-			if (!forced_latejoin_rule.repeatable)
-				latejoin_rules = remove_from_list(latejoin_rules, forced_latejoin_rule.type)
-			addtimer(CALLBACK(src, /datum/game_mode/dynamic/.proc/execute_midround_latejoin_rule, forced_latejoin_rule), forced_latejoin_rule.delay)
+		log_dynamic("Forcing specific [forced_latejoin_rule.ruletype] ruleset [forced_latejoin_rule].")
+		if(!handle_executing_latejoin(forced_latejoin_rule, newPlayer, forced = TRUE))
+			message_admins("The forced latejoin ruleset [forced_latejoin_rule.name] couldn't be executed \
+				as the most recent latejoin did not fulfill the ruleset's requirements.")
 		forced_latejoin_rule = null
+		return
 
-	else if (latejoin_injection_cooldown < world.time && (forced_injection || prob(latejoin_roll_chance)))
-		forced_injection = FALSE
+	if(!forced_injection)
+		if(latejoin_injection_cooldown >= world.time)
+			return
+		if(!prob(latejoin_roll_chance))
+			return
 
-		var/list/drafted_rules = list()
-		for (var/datum/dynamic_ruleset/latejoin/rule in latejoin_rules)
-			if (!rule.weight)
-				continue
-			if (rule.acceptable(GLOB.alive_player_list.len, threat_level) && mid_round_budget >= rule.cost)
-				// No stacking : only one round-ender, unless threat level > stacking_limit.
-				if (threat_level < GLOB.dynamic_stacking_limit && GLOB.dynamic_no_stacking)
-					if(rule.flags & HIGH_IMPACT_RULESET && high_impact_ruleset_executed)
-						continue
+	var/was_forced = forced_injection
+	forced_injection = FALSE
+	var/list/possible_latejoin_rules = list()
+	for (var/datum/dynamic_ruleset/latejoin/rule in latejoin_rules)
+		if(!rule.weight)
+			continue
+		if(mid_round_budget < rule.cost)
+			continue
+		if(!rule.acceptable(GLOB.alive_player_list.len, threat_level))
+			continue
+		possible_latejoin_rules[rule] = rule.get_weight()
 
-				rule.candidates = list(newPlayer)
-				rule.trim_candidates()
-				if (rule.ready())
-					drafted_rules[rule] = rule.get_weight()
+	if(!length(possible_latejoin_rules))
+		log_dynamic("FAIL: [newPlayer] was selected to roll for a latejoin ruleset, but there were no valid rulesets.")
+		return
 
-		if (drafted_rules.len > 0 && pick_latejoin_rule(drafted_rules))
-			var/latejoin_injection_cooldown_middle = 0.5*(latejoin_delay_max + latejoin_delay_min)
-			latejoin_injection_cooldown = round(clamp(EXP_DISTRIBUTION(latejoin_injection_cooldown_middle), latejoin_delay_min, latejoin_delay_max)) + world.time
+	log_dynamic("[newPlayer] was selected to roll for a latejoin ruleset from the following list: [english_list(possible_latejoin_rules)].")
+	// You get one shot at becoming a latejoin antag, if it fails the next guy will try.
+	var/datum/dynamic_ruleset/latejoin/picked_rule = pick_ruleset(possible_latejoin_rules, max_allowed_attempts = 1)
+	if(isnull(picked_rule))
+		log_dynamic("FAIL: No valid rulset was selected for [newPlayer]'s latejoin[was_forced ? "" : ", the next player will be checked instead"].")
+		return
+	if(was_forced)
+		log_dynamic("Forcing random [picked_rule.ruletype] ruleset [picked_rule].")
+	handle_executing_latejoin(picked_rule, newPlayer, forced = was_forced)
+
+/**
+ * This proc handles the execution of a latejoin ruleset, including removing it from latejoin rulesets if not repeatable,
+ * upping the injection cooldown, and starting a timer to execute the ruleset on delay.
+ */
+/datum/game_mode/dynamic/proc/handle_executing_latejoin(datum/dynamic_ruleset/ruleset, mob/living/carbon/human/only_candidate, forced = FALSE)
+	ruleset.candidates = list(only_candidate)
+	ruleset.trim_candidates()
+	ruleset.load_templates()
+	if (!ruleset.ready(forced))
+		log_dynamic("FAIL: [only_candidate] was selected to latejoin with the [ruleset] ruleset, \
+			but the ruleset failed to execute[length(ruleset.candidates) ? "":" as they were not a valid candiate"].")
+		return FALSE
+	if (!ruleset.repeatable)
+		latejoin_rules = remove_from_list(latejoin_rules, ruleset.type)
+	addtimer(CALLBACK(src, PROC_REF(execute_midround_latejoin_rule), ruleset), ruleset.delay)
+
+	if(!forced)
+		var/latejoin_injection_cooldown_middle = 0.5 * (latejoin_delay_max + latejoin_delay_min)
+		latejoin_injection_cooldown = round(clamp(EXP_DISTRIBUTION(latejoin_injection_cooldown_middle), latejoin_delay_min, latejoin_delay_max)) + world.time
+		log_dynamic("A latejoin rulset triggered successfully, the next latejoin injection will happen at [latejoin_injection_cooldown] round time.")
+
+	return TRUE
 
 /// Apply configurations to rule.
 /datum/game_mode/dynamic/proc/configure_ruleset(datum/dynamic_ruleset/ruleset)
@@ -712,6 +781,26 @@ GLOBAL_VAR_INIT(dynamic_forced_threat_level, -1)
 		ruleset.restricted_roles |= ruleset.protected_roles
 	if(CONFIG_GET(flag/protect_assistant_from_antagonist))
 		ruleset.restricted_roles |= JOB_ASSISTANT
+
+/// Get station traits and call for their config
+/datum/game_mode/dynamic/proc/configure_station_trait_costs()
+	if(!CONFIG_GET(flag/dynamic_config_enabled))
+		return
+	for(var/datum/station_trait/station_trait as anything in GLOB.dynamic_station_traits)
+		configure_station_trait(station_trait)
+
+/// Apply configuration for station trait costs
+/datum/game_mode/dynamic/proc/configure_station_trait(datum/station_trait/station_trait)
+	var/list/station_trait_config = LAZYACCESSASSOC(configuration, "Station", station_trait.dynamic_threat_id)
+	var/cost = station_trait_config["cost"]
+
+	if(isnull(cost)) //0 is valid so check for null specifically
+		return
+
+	if(cost != GLOB.dynamic_station_traits[station_trait])
+		log_dynamic("Config set [station_trait.dynamic_threat_id] cost from [station_trait.threat_reduction] to [cost]")
+
+	GLOB.dynamic_station_traits[station_trait] = cost
 
 /// Refund threat, but no more than threat_level.
 /datum/game_mode/dynamic/proc/refund_threat(regain)
@@ -743,37 +832,27 @@ GLOBAL_VAR_INIT(dynamic_forced_threat_level, -1)
 	if (!isnull(threat_log))
 		log_threat(-cost, threat_log, reason)
 
-/// Turns the value generated by lorentz distribution to number between 0 and 100.
-/// Used for threat level and splitting the budgets.
-/datum/game_mode/dynamic/proc/lorentz_to_amount(x)
-	switch (x)
-		if (-INFINITY to -20)
-			return rand(0, 10)
-		if (-20 to -10)
-			return RULE_OF_THREE(-40, -20, x) + 50
-		if (-10 to -5)
-			return RULE_OF_THREE(-30, -10, x) + 50
-		if (-5 to -2.5)
-			return RULE_OF_THREE(-20, -5, x) + 50
-		if (-2.5 to -0)
-			return RULE_OF_THREE(-10, -2.5, x) + 50
-		if (0 to 2.5)
-			return RULE_OF_THREE(10, 2.5, x) + 50
-		if (2.5 to 5)
-			return RULE_OF_THREE(20, 5, x) + 50
-		if (5 to 10)
-			return RULE_OF_THREE(30, 10, x) + 50
-		if (10 to 20)
-			return RULE_OF_THREE(40, 20, x) + 50
-		if (20 to INFINITY)
-			return rand(90, 100)
+#define MAXIMUM_DYN_DISTANCE 5
 
-/// Log to messages and to the game
-/datum/game_mode/dynamic/proc/dynamic_log(text)
-	message_admins("DYNAMIC: [text]")
-	log_game("DYNAMIC: [text]")
+/**
+ * Returns the comulative distribution of threat centre and width, and a random location of -0.5 to 0.5
+ * plus or minus the otherwise unattainable lower and upper percentiles. All multiplied by the maximum
+ * threat and then rounded to the nearest interval.
+ * rand() calls without arguments returns a value between 0 and 1, allowing for smaller intervals.
+ */
+/datum/game_mode/dynamic/proc/lorentz_to_amount(centre = 0, scale = 1.8, max_threat = 100, interval = 1)
+	var/location = rand(-MAXIMUM_DYN_DISTANCE, MAXIMUM_DYN_DISTANCE) * rand()
+	var/lorentz_result = LORENTZ_CUMULATIVE_DISTRIBUTION(centre, location, scale)
+	var/std_threat = lorentz_result * max_threat
+	///Without these, the amount won't come close to hitting 0% or 100% of the max threat.
+	var/lower_deviation = max(std_threat * (location-centre)/MAXIMUM_DYN_DISTANCE, 0)
+	var/upper_deviation = max((max_threat - std_threat) * (centre-location)/MAXIMUM_DYN_DISTANCE, 0)
+	return clamp(round(std_threat + upper_deviation - lower_deviation, interval), 0, 100)
+
+#undef MAXIMUM_DYN_DISTANCE
 
 #undef FAKE_REPORT_CHANCE
 #undef FAKE_GREENSHIFT_FORM_CHANCE
+#undef PULSAR_REPORT_CHANCE
 #undef REPORT_NEG_DIVERGENCE
 #undef REPORT_POS_DIVERGENCE

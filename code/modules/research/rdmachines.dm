@@ -20,13 +20,33 @@
 
 /obj/machinery/rnd/Initialize(mapload)
 	. = ..()
-	stored_research = SSresearch.science_tech
-	wires = new /datum/wires/rnd(src)
+	set_wires(new /datum/wires/rnd(src))
+
+/obj/machinery/rnd/LateInitialize()
+	. = ..()
+	if(!CONFIG_GET(flag/no_default_techweb_link) && !stored_research)
+		CONNECT_TO_RND_SERVER_ROUNDSTART(stored_research, src)
+	if(stored_research)
+		on_connected_techweb()
 
 /obj/machinery/rnd/Destroy()
-	stored_research = null
+	if(stored_research)
+		log_research("[src] disconnected from techweb [stored_research] (destroyed).")
+		stored_research = null
 	QDEL_NULL(wires)
 	return ..()
+
+///Called when attempting to connect the machine to a techweb, forgetting the old.
+/obj/machinery/rnd/proc/connect_techweb(datum/techweb/new_techweb)
+	if(stored_research)
+		log_research("[src] disconnected from techweb [stored_research] when connected to [new_techweb].")
+	stored_research = new_techweb
+	if(!isnull(stored_research))
+		on_connected_techweb()
+
+///Called post-connection to a new techweb.
+/obj/machinery/rnd/proc/on_connected_techweb()
+	SHOULD_CALL_PARENT(FALSE)
 
 /obj/machinery/rnd/proc/shock(mob/user, prb)
 	if(machine_stat & (BROKEN|NOPOWER)) // unpowered, no shock
@@ -59,10 +79,14 @@
 /obj/machinery/rnd/screwdriver_act_secondary(mob/living/user, obj/item/tool)
 	return default_deconstruction_screwdriver(user, "[initial(icon_state)]_t", initial(icon_state), tool)
 
-/obj/machinery/rnd/multitool_act(mob/living/user, obj/item/tool)
+/obj/machinery/rnd/multitool_act(mob/living/user, obj/item/multitool/tool)
 	if(panel_open)
 		wires.interact(user)
 		return TRUE
+	if(!QDELETED(tool.buffer) && istype(tool.buffer, /datum/techweb))
+		connect_techweb(tool.buffer)
+		return TRUE
+	return FALSE
 
 /obj/machinery/rnd/multitool_act_secondary(mob/living/user, obj/item/tool)
 	if(panel_open)
@@ -115,10 +139,10 @@
 	var/stack_name
 	if(istype(item_inserted, /obj/item/stack/ore/bluespace_crystal))
 		stack_name = "bluespace"
-		use_power(MINERAL_MATERIAL_AMOUNT / 10)
+		use_power(SHEET_MATERIAL_AMOUNT / 10)
 	else
 		var/obj/item/stack/S = item_inserted
 		stack_name = S.name
 		use_power(min(active_power_usage, (amount_inserted / 100)))
 	add_overlay("protolathe_[stack_name]")
-	addtimer(CALLBACK(src, /atom/proc/cut_overlay, "protolathe_[stack_name]"), 10)
+	addtimer(CALLBACK(src, TYPE_PROC_REF(/atom, cut_overlay), "protolathe_[stack_name]"), 10)

@@ -21,9 +21,8 @@
 	description = "This reagent will consume itself and move the pH of a beaker towards acidity when added to another."
 	color = "#fbc314"
 	ph = 0
-	impure_chem = null
 	inverse_chem = null
-	failed_chem = null
+	fallback_icon = 'icons/obj/drinks/drink_effects.dmi'
 	fallback_icon_state = "acid_buffer_fallback"
 	///The strength of the buffer where (volume/holder.total_volume)*strength. So for 1u added to 50u the ph will decrease by 0.4
 	var/strength = 30
@@ -36,7 +35,7 @@
 	if(target.ph <= ph)
 		target.my_atom.audible_message(span_warning("The beaker froths as the buffer is added, to no effect."))
 		playsound(target.my_atom, 'sound/chemistry/bufferadd.ogg', 50, TRUE)
-		holder.remove_reagent(type, amount)//Remove from holder because it's not transfered
+		holder.remove_reagent(type, amount)//Remove from holder because it's not transferred
 		return
 	var/ph_change = -((amount/target.total_volume)*strength)
 	target.adjust_all_reagents_ph(ph_change, ph, 14)
@@ -49,9 +48,8 @@
 	description = "This reagent will consume itself and move the pH of a beaker towards alkalinity when added to another."
 	color = "#3853a4"
 	ph = 14
-	impure_chem = null
 	inverse_chem = null
-	failed_chem = null
+	fallback_icon = 'icons/obj/drinks/drink_effects.dmi'
 	fallback_icon_state = "base_buffer_fallback"
 	///The strength of the buffer where (volume/holder.total_volume)*strength. So for 1u added to 50u the ph will increase by 0.4
 	var/strength = 30
@@ -63,7 +61,7 @@
 	if(target.ph >= ph)
 		target.my_atom.audible_message(span_warning("The beaker froths as the buffer is added, to no effect."))
 		playsound(target.my_atom, 'sound/chemistry/bufferadd.ogg', 50, TRUE)
-		holder.remove_reagent(type, amount)//Remove from holder because it's not transfered
+		holder.remove_reagent(type, amount)//Remove from holder because it's not transferred
 		return
 	var/ph_change = (amount/target.total_volume)*strength
 	target.adjust_all_reagents_ph(ph_change, 0, ph)

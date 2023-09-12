@@ -1,6 +1,6 @@
 /datum/action/cooldown/mob_cooldown/fire_breath
 	name = "Fire Breath"
-	icon_icon = 'icons/obj/wizard.dmi'
+	button_icon = 'icons/effects/magic.dmi'
 	button_icon_state = "fireball"
 	desc = "Allows you to shoot fire towards a target."
 	cooldown_time = 3 SECONDS
@@ -12,9 +12,10 @@
 	var/ice_breath = FALSE
 
 /datum/action/cooldown/mob_cooldown/fire_breath/Activate(atom/target_atom)
-	StartCooldown(10 SECONDS)
+	StartCooldown(360 SECONDS, 360 SECONDS)
 	attack_sequence(target_atom)
 	StartCooldown()
+	return TRUE
 
 /datum/action/cooldown/mob_cooldown/fire_breath/proc/attack_sequence(atom/target)
 	playsound(owner.loc, fire_sound, 200, TRUE)
@@ -23,7 +24,8 @@
 /datum/action/cooldown/mob_cooldown/fire_breath/proc/fire_line(atom/target, offset)
 	SLEEP_CHECK_DEATH(0, owner)
 	var/list/turfs = line_target(offset, fire_range, target)
-	dragon_fire_line(owner, turfs, ice_breath)
+	// This proc sleeps
+	INVOKE_ASYNC(GLOBAL_PROC, GLOBAL_PROC_REF(dragon_fire_line), owner,  /* burn_turfs = */ turfs,  /* frozen = */ ice_breath)
 
 /datum/action/cooldown/mob_cooldown/fire_breath/proc/line_target(offset, range, atom/target)
 	if(!target)
@@ -40,11 +42,11 @@
 /datum/action/cooldown/mob_cooldown/fire_breath/cone/attack_sequence(atom/target)
 	playsound(owner.loc, fire_sound, 200, TRUE)
 	for(var/offset in angles)
-		INVOKE_ASYNC(src, .proc/fire_line, target, offset)
+		INVOKE_ASYNC(src, PROC_REF(fire_line), target, offset)
 
 /datum/action/cooldown/mob_cooldown/fire_breath/mass_fire
 	name = "Mass Fire"
-	icon_icon = 'icons/effects/fire.dmi'
+	button_icon = 'icons/effects/fire.dmi'
 	button_icon_state = "1"
 	desc = "Allows you to shoot fire in all directions."
 	cooldown_time = 3 SECONDS
@@ -58,6 +60,5 @@
 		playsound(owner.loc, fire_sound, 200, TRUE)
 		var/increment = 360 / spiral_count
 		for(var/j = 1 to spiral_count)
-			INVOKE_ASYNC(src, .proc/fire_line, target, j * increment + i * increment / 2)
+			INVOKE_ASYNC(src, PROC_REF(fire_line), target, j * increment + i * increment / 2)
 		SLEEP_CHECK_DEATH(delay_time, owner)
-

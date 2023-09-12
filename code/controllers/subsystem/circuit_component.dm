@@ -2,6 +2,7 @@ SUBSYSTEM_DEF(circuit_component)
 	name = "Circuit Components"
 	wait = 0.1 SECONDS
 	priority = FIRE_PRIORITY_DEFAULT
+	flags = SS_NO_INIT
 
 	var/list/callbacks_to_invoke = list()
 	var/list/currentrun = list()
@@ -27,8 +28,6 @@ SUBSYSTEM_DEF(circuit_component)
 
 		to_call.user = null
 		to_call.InvokeAsync()
-		qdel(to_call)
-
 
 		if(MC_TICK_CHECK)
 			return
@@ -75,7 +74,6 @@ SUBSYSTEM_DEF(circuit_component)
 			instant_run_currentrun.Cut(1,2)
 			to_call.user = null
 			to_call.InvokeAsync(received_inputs)
-			qdel(to_call)
 
 	if(length(instant_run_stack))
 		instant_run_callbacks_to_run = pop(instant_run_stack)

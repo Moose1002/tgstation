@@ -11,7 +11,7 @@
 /turf/open/floor/plating,
 /area/centcom/mafia)
 "h" = (
-/obj/structure/grille/indestructable,
+/obj/structure/grille/indestructible,
 /turf/open/floor/plating,
 /area/centcom/mafia)
 "i" = (
@@ -28,6 +28,7 @@
 /area/centcom/mafia)
 "l" = (
 /obj/structure/closet/abductor,
+/obj/item/abductor/gizmo,
 /turf/open/floor/plating/abductor,
 /area/centcom/mafia)
 "m" = (
@@ -42,6 +43,7 @@
 /area/centcom/mafia)
 "o" = (
 /obj/structure/closet/abductor,
+/obj/item/abductor/gizmo,
 /turf/open/floor/plating/abductor2,
 /area/centcom/mafia)
 "p" = (
@@ -83,7 +85,7 @@
 /turf/open/floor/plating/abductor2,
 /area/centcom/mafia)
 "z" = (
-/obj/structure/grille/indestructable,
+/obj/structure/grille/indestructible,
 /turf/open/floor/fakespace,
 /area/centcom/mafia)
 "B" = (

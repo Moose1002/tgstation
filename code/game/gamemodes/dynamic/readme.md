@@ -99,7 +99,7 @@ Latejoin: Only one candidate, the latejoiner. Standard checks.
 Midround: Instead of building a single list candidates, candidates contains four lists: living, dead, observing, and living antags. Standard checks in trim_list(list).
 
 Midround - Rulesets have additional types
-/from_ghosts: execute() -> send_applications() -> review_applications() -> finish_setup(mob/newcharacter, index) -> setup_role(role)
+/from_ghosts: execute() -> send_applications() -> review_applications() -> finish_applications() -> finish_setup(mob/newcharacter, index) -> setup_role(role)
 **NOTE: execute() here adds dead players and observers to candidates list
 
 ## Configuration and variables
@@ -130,6 +130,11 @@ The format of this file is:
 
 	"Latejoin": {
 		/* Same as "Roundstart", but for `/datum/dynamic_ruleset/latejoin` instead. */
+	},
+
+	"Station": {
+		/* Special threat reductions for dangerous station traits. Traits are selected before dynamic, so traits will always  */
+		/* reduce threat even if there's no threat for it available. Only "cost" can be modified */
 	}
 }
 ```
