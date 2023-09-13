@@ -80,47 +80,34 @@ GLOBAL_LIST_EMPTY(conveyors_by_id)
 /obj/machinery/conveyor/underground
 	name = "underground belt"
 	desc = "An underground conveyor belt. Good for crossing other conveyor belts."
+	icon_state = "underground"
 	var/obj/machinery/conveyor/underground/linked_conveyor
 	var/obj/machinery/conveyor/underground/entrance
 	var/obj/machinery/conveyor/underground/exit
+	/// Max distance between entrance and exit
 	var/max_distance = 4
 
-/obj/machinery/conveyor/underground/Initialize(mapload, new_dir, new_id)
-	. = ..()
 
-	var/static/list/loc_connections = list(
-		//COMSIG_ATOM_EXITED = .proc/conveyable_exit,
-		COMSIG_ATOM_ENTERED = .proc/underground_enter,
-		COMSIG_ATOM_INITIALIZED_ON = .proc/underground_enter
-	)
-	AddElement(/datum/element/connect_loc, loc_connections)
+/obj/machinery/conveyor/underground/attackby(obj/item/attacking_item, mob/living/user, params)
+	if(attacking_item.tool_behaviour == TOOL_MULTITOOL)
+		var/obj/item/multitool/multitool = attacking_item
+		if(!linked_conveyor && !istype(multitool.buffer, /obj/machinery/conveyor/underground))
+			multitool.set_buffer(src)
+			balloon_alert(user, "added to multitool buffer")
+			return
 
-	var/turf/current_turf = get_turf(src)
-	var/exit_dir = src.dir
-	switch(exit_dir)
-		if(NORTH)
-			exit_dir = SOUTH
-		if(SOUTH)
-			exit_dir = NORTH
-		if(EAST)
-			exit_dir = WEST
-		if(WEST)
-			exit_dir = EAST
-	var/distance = 0
-
-	while(!entrance)
-		current_turf = get_step(current_turf, exit_dir)
-		distance += 1
-		if(locate(/obj/machinery/conveyor/underground) in current_turf)
-			//linked_conveyor = locate(/obj/machinery/conveyor/underground) in current_turf
-			//linked_conveyor.linked_conveyor = src
-			entrance = locate(/obj/machinery/conveyor/underground) in current_turf
-			exit = src
-			entrance.entrance = entrance
-			entrance.exit = src
-
-		else if(distance >=  max_distance)
-			break
+		if(multitool.buffer != src)
+			var/obj/machinery/conveyor/underground/buffer_conveyor = multitool.buffer
+			if(get_dist(get_turf(src), get_turf(buffer_conveyor)) > max_distance)
+				multitool.set_buffer(null)
+				to_chat(user, span_notice("Distance between [src.name]'s is too great. Clearing buffer."))
+				return
+			linked_conveyor = buffer_conveyor
+			buffer_conveyor.linked_conveyor = src
+			multitool.set_buffer(null)
+			return
+	else
+		return ..()
 
 /obj/machinery/conveyor/underground/proc/underground_enter(datum/source, atom/movable/convayable)
 	SIGNAL_HANDLER
