@@ -114,7 +114,8 @@ GLOBAL_LIST_EMPTY(conveyors_by_id)
 /obj/machinery/conveyor/underground/entrance
 	name = "underground conveyor entrance"
 	desc = "The entrance to an underground conveyor belt. Good for crossing other conveyor belts."
-	icon_state = "underground-entrance"
+	icon_state = "underground_entrance_map"
+	base_icon_state = "underground_entrance"
 	var/obj/machinery/conveyor/underground/exit/linked_conveyor
 	/// Max distance between entrance and exit
 	var/max_distance = 4
@@ -137,7 +138,8 @@ GLOBAL_LIST_EMPTY(conveyors_by_id)
 /obj/machinery/conveyor/underground/exit
 	name = "underground conveyor exit"
 	desc = "The exit to an underground conveyor belt. Good for crossing other conveyor belts."
-	icon_state = "underground-exit"
+	icon_state = "underground_exit_map"
+	base_icon_state = "underground_exit"
 	var/obj/machinery/conveyor/underground/entrance/linked_conveyor
 	/// Max distance between entrance and exit
 	var/max_distance = 4
