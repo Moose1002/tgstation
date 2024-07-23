@@ -111,6 +111,63 @@ GLOBAL_LIST_EMPTY(conveyors_by_id)
 	icon_state = "conveyor_map_inverted"
 	flipped = TRUE
 
+/obj/machinery/conveyor/underground/entrance
+	name = "underground conveyor entrance"
+	desc = "The entrance to an underground conveyor belt. Good for crossing other conveyor belts."
+	icon_state = "underground-entrance"
+	var/obj/machinery/conveyor/underground/exit/linked_conveyor
+	/// Max distance between entrance and exit
+	var/max_distance = 4
+
+/obj/machinery/conveyor/underground/entrance/Initialize(mapload, new_dir, new_id)
+	. = ..()
+	var/turf/current_turf = get_turf(src)
+	var/distance = 0
+	while (!linked_conveyor)
+		current_turf = get_step(current_turf, dir)
+		distance += 1
+		if (locate(/obj/machinery/conveyor/underground/exit) in current_turf)
+			linked_conveyor = locate(/obj/machinery/conveyor/underground/exit) in current_turf
+			linked_conveyor.linked_conveyor = src
+			balloon_alert_to_viewers("linked to exit")
+		else if (distance >= max_distance)
+			balloon_alert_to_viewers("no exit found within [max_distance] tiles")
+			break
+
+/obj/machinery/conveyor/underground/exit
+	name = "underground conveyor exit"
+	desc = "The exit to an underground conveyor belt. Good for crossing other conveyor belts."
+	icon_state = "underground-exit"
+	var/obj/machinery/conveyor/underground/entrance/linked_conveyor
+	/// Max distance between entrance and exit
+	var/max_distance = 4
+
+/obj/machinery/conveyor/underground/exit/Initialize(mapload, new_dir, new_id)
+	. = ..()
+	var/turf/current_turf = get_turf(src)
+	var/distance = 0
+	var/inverted_dir = dir
+	switch(inverted_dir)
+		if(NORTH)
+			inverted_dir = SOUTH
+		if(SOUTH)
+			inverted_dir = NORTH
+		if(EAST)
+			inverted_dir = WEST
+		if(WEST)
+			inverted_dir = EAST
+	while (!linked_conveyor)
+		current_turf = get_step(current_turf, inverted_dir)
+		distance += 1
+		if (locate(/obj/machinery/conveyor/underground/entrance) in current_turf)
+			linked_conveyor = locate(/obj/machinery/conveyor/underground/entrance) in current_turf
+			linked_conveyor.linked_conveyor = src
+			balloon_alert_to_viewers("linked to entrance")
+		else if (distance >= max_distance)
+			balloon_alert_to_viewers("no entrance found within [max_distance] tiles")
+			break
+
+
 /obj/machinery/conveyor/post_machine_initialize()
 	. = ..()
 	build_neighbors()
