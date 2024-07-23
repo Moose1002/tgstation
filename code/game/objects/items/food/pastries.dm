@@ -34,6 +34,10 @@
 	foodtypes = GRAIN | FRUIT | SUGAR | BREAKFAST
 	crafting_complexity = FOOD_COMPLEXITY_4
 
+/obj/item/food/muffin/booberry/Initialize(mapload, starting_reagent_purity, no_base_reagents)
+	. = ..()
+	AddComponent(/datum/component/ghost_edible, bite_consumption = bite_consumption)
+
 /obj/item/food/muffin/moffin
 	name = "moffin"
 	icon_state = "moffin_1"
@@ -72,6 +76,10 @@
 	foodtypes = GRAIN | SUGAR | BREAKFAST
 	w_class = WEIGHT_CLASS_SMALL
 	crafting_complexity = FOOD_COMPLEXITY_2
+
+/obj/item/food/waffles/make_edible()
+	. = ..()
+	AddComponent(/datum/component/ice_cream_holder, max_scoops = 1, x_offset = -2)
 
 /obj/item/food/soylentgreen
 	name = "\improper Soylent Green"
@@ -118,6 +126,10 @@
 	foodtypes = GRAIN | VEGETABLES | SUGAR | BREAKFAST
 	w_class = WEIGHT_CLASS_SMALL
 	crafting_complexity = FOOD_COMPLEXITY_3
+
+/obj/item/food/rofflewaffles/make_edible()
+	. = ..()
+	AddComponent(/datum/component/ice_cream_holder, max_scoops = 1, x_offset = -2)
 
 ////////////////////////////////////////////OTHER////////////////////////////////////////////
 
@@ -182,9 +194,9 @@
 	foodtypes = GRAIN | JUNKFOOD | SUGAR
 	crafting_complexity = FOOD_COMPLEXITY_2
 
-/obj/item/food/cookie/sugar/Initialize(mapload)
+/obj/item/food/cookie/sugar/Initialize(mapload, seasonal_changes = TRUE)
 	. = ..()
-	if(check_holidays(FESTIVE_SEASON))
+	if(seasonal_changes && check_holidays(FESTIVE_SEASON))
 		var/shape = pick("tree", "bear", "santa", "stocking", "present", "cane")
 		desc = "A sugar cookie in the shape of a [shape]. I hope Santa likes it!"
 		icon_state = "sugarcookie_[shape]"
@@ -352,7 +364,7 @@
 	bite_consumption = 4
 	foodtypes = DAIRY | SUGAR
 	food_flags = FOOD_FINGER_FOOD
-	crafting_complexity = FOOD_COMPLEXITY_3
+	crafting_complexity = FOOD_COMPLEXITY_2
 	max_volume = 10 //The max volumes scales up with the number of scoops of ice cream served.
 	/// These two variables are used by the ice cream vat. Latter is the one that shows on the UI.
 	var/list/ingredients = list(
@@ -367,14 +379,16 @@
 	 */
 	var/list/prefill_flavours
 
-/obj/item/food/icecream/Initialize(mapload, starting_reagent_purity, no_base_reagents, list/prefill_flavours)
-	if(prefill_flavours)
-		src.prefill_flavours = prefill_flavours
+/obj/item/food/icecream/Initialize(mapload, list/prefill_flavours)
+	if(ingredients)
+		ingredients_text = "Requires: [reagent_paths_list_to_text(ingredients)]"
+	src.prefill_flavours = prefill_flavours
 	return ..()
 
 /obj/item/food/icecream/make_edible()
 	. = ..()
-	AddComponent(/datum/component/ice_cream_holder, filled_name = "ice cream", change_desc = TRUE, prefill_flavours = prefill_flavours)
+	var/max_scoops = check_holidays(ICE_CREAM_DAY) ? DEFAULT_MAX_ICE_CREAM_SCOOPS * 4 : DEFAULT_MAX_ICE_CREAM_SCOOPS
+	AddComponent(/datum/component/ice_cream_holder, max_scoops, filled_name = "ice cream", change_desc = TRUE, prefill_flavours = prefill_flavours)
 
 /obj/item/food/icecream/chocolate
 	name = "chocolate cone"
@@ -389,7 +403,6 @@
 		/datum/reagent/consumable/sugar,
 		/datum/reagent/consumable/coco,
 	)
-	crafting_complexity = FOOD_COMPLEXITY_3
 
 /obj/item/food/icecream/korta
 	name = "korta cone"
@@ -533,6 +546,7 @@
 	foodtypes = GRAIN | SUGAR | DAIRY
 	food_flags = FOOD_FINGER_FOOD
 	w_class = WEIGHT_CLASS_SMALL
+	crafting_complexity = FOOD_COMPLEXITY_3
 
 /obj/item/food/cookie/snickerdoodle
 	name = "snickerdoodle"
@@ -543,6 +557,7 @@
 	foodtypes = GRAIN | SUGAR | DAIRY
 	food_flags = FOOD_FINGER_FOOD
 	w_class = WEIGHT_CLASS_SMALL
+	crafting_complexity = FOOD_COMPLEXITY_3
 
 /obj/item/food/cookie/macaron
 	name = "macaron"
@@ -554,6 +569,7 @@
 	foodtypes = GRAIN | SUGAR | DAIRY
 	food_flags = FOOD_FINGER_FOOD
 	w_class = WEIGHT_CLASS_TINY
+	crafting_complexity = FOOD_COMPLEXITY_3
 
 /obj/item/food/cookie/macaron/Initialize(mapload)
 	. = ..()
@@ -568,3 +584,4 @@
 	foodtypes = GRAIN | SUGAR | FRUIT
 	food_flags = FOOD_FINGER_FOOD
 	w_class = WEIGHT_CLASS_SMALL
+	crafting_complexity = FOOD_COMPLEXITY_3

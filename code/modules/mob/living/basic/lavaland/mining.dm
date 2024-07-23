@@ -2,12 +2,17 @@
 /mob/living/basic/mining
 	icon = 'icons/mob/simple/lavaland/lavaland_monsters.dmi'
 	combat_mode = TRUE
+	status_flags = NONE //don't inherit standard basicmob flags
 	mob_size = MOB_SIZE_LARGE
 	mob_biotypes = MOB_ORGANIC|MOB_BEAST
-	faction = list(FACTION_MINING)
+	faction = list(FACTION_MINING, FACTION_ASHWALKER)
 	unsuitable_atmos_damage = 0
 	minimum_survivable_temperature = 0
 	maximum_survivable_temperature = INFINITY
+	// Pale purple, should be red enough to see stuff on lavaland
+	lighting_cutoff_red = 25
+	lighting_cutoff_green = 15
+	lighting_cutoff_blue = 35
 	/// Message to output if throwing damage is absorbed
 	var/throw_blocked_message = "bounces off"
 	/// What crusher trophy this mob drops, if any
@@ -17,7 +22,7 @@
 
 /mob/living/basic/mining/Initialize(mapload)
 	. = ..()
-	add_traits(list(TRAIT_LAVA_IMMUNE, TRAIT_ASHSTORM_IMMUNE), INNATE_TRAIT)
+	add_traits(list(TRAIT_LAVA_IMMUNE, TRAIT_ASHSTORM_IMMUNE, TRAIT_SNOWSTORM_IMMUNE), INNATE_TRAIT)
 	AddElement(/datum/element/mob_killed_tally, "mobs_killed_mining")
 	var/static/list/vulnerable_projectiles
 	if(!vulnerable_projectiles)
@@ -37,3 +42,11 @@
 			drop_mod = crusher_drop_chance,\
 			drop_immediately = basic_mob_flags & DEL_ON_DEATH,\
 		)
+	RegisterSignal(src, COMSIG_ATOM_WAS_ATTACKED, PROC_REF(check_ashwalker_peace_violation))
+
+/mob/living/basic/mining/proc/check_ashwalker_peace_violation(datum/source, mob/living/carbon/human/possible_ashwalker)
+	SIGNAL_HANDLER
+
+	if(!isashwalker(possible_ashwalker) || !(FACTION_ASHWALKER in faction))
+		return
+	faction.Remove(FACTION_ASHWALKER)

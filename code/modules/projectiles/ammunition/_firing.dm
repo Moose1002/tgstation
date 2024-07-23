@@ -65,6 +65,7 @@
 	if(reagents && loaded_projectile.reagents)
 		reagents.trans_to(loaded_projectile, reagents.total_volume, transferred_by = user) //For chemical darts/bullets
 		qdel(reagents)
+	SEND_SIGNAL(src, COMSIG_CASING_READY_PROJECTILE, target, user, quiet, zone_override, fired_from)
 
 /obj/item/ammo_casing/proc/throw_proj(atom/target, turf/targloc, mob/living/user, params, spread, atom/fired_from)
 	var/turf/curloc = get_turf(fired_from)
@@ -80,9 +81,7 @@
 	var/direct_target
 	if(target && curloc.Adjacent(targloc, target=targloc, mover=src)) //if the target is right on our location or adjacent (including diagonally if reachable) we'll skip the travelling code in the proj's fire()
 		direct_target = target
-	if(!direct_target)
-		var/modifiers = params2list(params)
-		loaded_projectile.preparePixelProjectile(target, fired_from, modifiers, spread)
+	loaded_projectile.preparePixelProjectile(target, fired_from, params2list(params), spread)
 	var/obj/projectile/loaded_projectile_cache = loaded_projectile
 	loaded_projectile = null
 	loaded_projectile_cache.fire(null, direct_target)

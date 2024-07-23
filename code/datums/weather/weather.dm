@@ -56,7 +56,7 @@
 	/// The list of z-levels that this weather is actively affecting
 	var/impacted_z_levels
 
-	/// Since it's above everything else, this is the layer used by default. TURF_LAYER is below mobs and walls if you need to use that.
+	/// Since it's above everything else, this is the layer used by default.
 	var/overlay_layer = AREA_LAYER
 	/// Plane for the overlay
 	var/overlay_plane = AREA_PLANE
@@ -182,7 +182,7 @@
 			if(alert_sfx)
 				SEND_SOUND(player, sound(alert_sfx))
 
-// the checks for if a mob should recieve alerts, returns TRUE if can
+// the checks for if a mob should receive alerts, returns TRUE if can
 /datum/weather/proc/can_get_alert(mob/player)
 	var/turf/mob_turf = get_turf(player)
 	return !isnull(mob_turf)
@@ -259,9 +259,10 @@
 		// This method of applying one overlay per z layer has some minor downsides, in that it could lead to improperly doubled effects if some have alpha
 		// I prefer it to creating 2 extra plane masters however, so it's a cost I'm willing to pay
 		// LU
-		var/mutable_appearance/glow_overlay = mutable_appearance('icons/effects/glow_weather.dmi', weather_state, overlay_layer, null, ABOVE_LIGHTING_PLANE, 100, offset_const = offset)
-		glow_overlay.color = weather_color
-		gen_overlay_cache += glow_overlay
+		if(use_glow)
+			var/mutable_appearance/glow_overlay = mutable_appearance('icons/effects/glow_weather.dmi', weather_state, overlay_layer, null, ABOVE_LIGHTING_PLANE, 100, offset_const = offset)
+			glow_overlay.color = weather_color
+			gen_overlay_cache += glow_overlay
 
 		var/mutable_appearance/weather_overlay = mutable_appearance('icons/effects/weather_effects.dmi', weather_state, overlay_layer, plane = overlay_plane, offset_const = offset)
 		weather_overlay.color = weather_color

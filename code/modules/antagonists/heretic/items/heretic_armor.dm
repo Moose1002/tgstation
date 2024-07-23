@@ -34,6 +34,7 @@
 	bio = 20
 	fire = 20
 	acid = 20
+	wound = 20
 
 /obj/item/clothing/suit/hooded/cultrobes/eldritch/examine(mob/user)
 	. = ..()
@@ -50,8 +51,8 @@
 	name = "void hood"
 	icon = 'icons/obj/clothing/head/helmet.dmi'
 	worn_icon = 'icons/mob/clothing/head/helmet.dmi'
-	desc = "Black like tar, doesn't reflect any light. Runic symbols line the outside, \
-		with each flash you loose comprehension of what you are seeing."
+	desc = "Black like tar, reflecting no light. Runic symbols line the outside. \
+		With each flash you lose comprehension of what you are seeing."
 	icon_state = "void_cloak"
 	flags_inv = NONE
 	flags_cover = NONE
@@ -64,6 +65,7 @@
 	laser = 30
 	energy = 30
 	bomb = 15
+	wound = 10
 
 /obj/item/clothing/head/hooded/cult_hoodie/void/Initialize(mapload)
 	. = ..()
@@ -71,8 +73,8 @@
 
 /obj/item/clothing/suit/hooded/cultrobes/void
 	name = "void cloak"
-	desc = "Black like tar, doesn't reflect any light. Runic symbols line the outside, \
-		with each flash you loose comprehension of what you are seeing."
+	desc = "Black like tar, reflecting no light. Runic symbols line the outside. \
+		With each flash you lose comprehension of what you are seeing."
 	icon_state = "void_cloak"
 	inhand_icon_state = null
 	allowed = list(/obj/item/melee/sickly_blade)
@@ -89,11 +91,13 @@
 	laser = 30
 	energy = 30
 	bomb = 15
+	wound = 10
 
 /obj/item/clothing/suit/hooded/cultrobes/void/Initialize(mapload)
 	. = ..()
 	create_storage(storage_type = /datum/storage/pockets/void_cloak)
 	make_visible()
+	ADD_TRAIT(src, TRAIT_CONTRABAND_BLOCKER, INNATE_TRAIT)
 
 /obj/item/clothing/suit/hooded/cultrobes/void/equipped(mob/user, slot)
 	. = ..()
@@ -105,12 +109,12 @@
 	. = ..()
 	UnregisterSignal(user, list(COMSIG_MOB_UNEQUIPPED_ITEM, COMSIG_MOB_EQUIPPED_ITEM))
 
-/obj/item/clothing/suit/hooded/cultrobes/void/proc/hide_item(obj/item/item, slot)
+/obj/item/clothing/suit/hooded/cultrobes/void/proc/hide_item(datum/source, obj/item/item, slot)
 	SIGNAL_HANDLER
 	if(slot & ITEM_SLOT_SUITSTORE)
 		ADD_TRAIT(item, TRAIT_NO_STRIP, REF(src)) // i'd use examine hide but its a flag and yeah
 
-/obj/item/clothing/suit/hooded/cultrobes/void/proc/show_item(obj/item/item, slot)
+/obj/item/clothing/suit/hooded/cultrobes/void/proc/show_item(datum/source, obj/item/item, slot)
 	SIGNAL_HANDLER
 	REMOVE_TRAIT(item, TRAIT_NO_STRIP, REF(src))
 

@@ -5,12 +5,14 @@
 
 /// Global typecache of things which should never be fried.
 GLOBAL_LIST_INIT(oilfry_blacklisted_items, typecacheof(list(
-	/obj/item/reagent_containers/cup,
-	/obj/item/reagent_containers/syringe,
-	/obj/item/reagent_containers/condiment,
+	/obj/item/bodybag/bluespace,
 	/obj/item/delivery,
 	/obj/item/his_grace,
-	/obj/item/bodybag/bluespace,
+	/obj/item/mod/control,
+	/obj/item/reagent_containers/condiment,
+	/obj/item/reagent_containers/cup,
+	/obj/item/reagent_containers/syringe,
+	/obj/item/reagent_containers/hypospray/medipen, //letting medipens become edible opens them to being injected/drained with IV drip & saltshakers
 )))
 
 /obj/machinery/deepfryer
@@ -36,6 +38,12 @@ GLOBAL_LIST_INIT(oilfry_blacklisted_items, typecacheof(list(
 	var/frying_fried = FALSE
 	/// Has our currently frying object been burnt?
 	var/frying_burnt = FALSE
+	/// How dirty the fryer is - show overlay at 1
+	var/grease_level = 0
+	/// The chance (%) of grease_level increase on process()
+	var/grease_increase_chance = 50
+	/// The amount of grease_level increase on process()
+	var/grease_Increase_amount = 0.1
 
 	/// Our sound loop for the frying sounde effect.
 	var/datum/looping_sound/deep_fryer/fry_loop
@@ -54,17 +62,17 @@ GLOBAL_LIST_INIT(oilfry_blacklisted_items, typecacheof(list(
 	create_reagents(50, OPENCONTAINER)
 	reagents.add_reagent(/datum/reagent/consumable/nutriment/fat/oil, 25)
 	fry_loop = new(src, FALSE)
+	RegisterSignal(src, COMSIG_COMPONENT_CLEAN_ACT, PROC_REF(on_cleaned))
 
 /obj/machinery/deepfryer/Destroy()
 	QDEL_NULL(fry_loop)
 	QDEL_NULL(frying)
 	return ..()
 
-/obj/machinery/deepfryer/deconstruct(disassembled)
+/obj/machinery/deepfryer/on_deconstruction(disassembled)
 	// This handles nulling out frying via exited
 	if(frying)
 		frying.forceMove(drop_location())
-	return ..()
 
 /obj/machinery/deepfryer/RefreshParts()
 	. = ..()
@@ -73,6 +81,11 @@ GLOBAL_LIST_INIT(oilfry_blacklisted_items, typecacheof(list(
 		oil_efficiency += laser.tier
 	oil_use = initial(oil_use) - (oil_efficiency * 0.00475)
 	fry_speed = oil_efficiency
+
+/obj/machinery/deepfryer/update_overlays()
+	. = ..()
+	if(grease_level >= 1)
+		. += "fryer_greasy"
 
 /obj/machinery/deepfryer/examine(mob/user)
 	. = ..()
@@ -84,7 +97,7 @@ GLOBAL_LIST_INIT(oilfry_blacklisted_items, typecacheof(list(
 /obj/machinery/deepfryer/wrench_act(mob/living/user, obj/item/tool)
 	. = ..()
 	default_unfasten_wrench(user, tool)
-	return TOOL_ACT_TOOLTYPE_SUCCESS
+	return ITEM_INTERACT_SUCCESS
 
 /obj/machinery/deepfryer/attackby(obj/item/weapon, mob/user, params)
 	// Dissolving pills into the frier
@@ -139,6 +152,8 @@ GLOBAL_LIST_INIT(oilfry_blacklisted_items, typecacheof(list(
 		return
 
 	reagents.trans_to(frying, oil_use * seconds_per_tick, multiplier = fry_speed * 3) //Fried foods gain more of the reagent thanks to space magic
+	grease_level += prob(grease_increase_chance) * grease_Increase_amount
+
 	cook_time += fry_speed * seconds_per_tick
 	if(cook_time >= DEEPFRYER_COOKTIME && !frying_fried)
 		frying_fried = TRUE //frying... frying... fried
@@ -146,9 +161,13 @@ GLOBAL_LIST_INIT(oilfry_blacklisted_items, typecacheof(list(
 		audible_message(span_notice("[src] dings!"))
 	else if (cook_time >= DEEPFRYER_BURNTIME && !frying_burnt)
 		frying_burnt = TRUE
-		visible_message(span_warning("[src] emits an acrid smell!"))
+		var/list/asomnia_hadders = list()
+		for(var/mob/smeller in get_hearers_in_view(DEFAULT_MESSAGE_RANGE, src))
+			if(HAS_TRAIT(smeller, TRAIT_ANOSMIA))
+				asomnia_hadders += smeller
+		visible_message(span_warning("[src] emits an acrid smell!"), ignored_mobs = asomnia_hadders)
 
-	use_power(active_power_usage)
+	use_energy(active_power_usage)
 
 /obj/machinery/deepfryer/Exited(atom/movable/gone, direction)
 	. = ..()
@@ -164,7 +183,9 @@ GLOBAL_LIST_INIT(oilfry_blacklisted_items, typecacheof(list(
 	frying_burnt = FALSE
 	fry_loop.stop()
 	cook_time = 0
+	flick("fryer_stop", src)
 	icon_state = "fryer_off"
+	update_appearance(UPDATE_OVERLAYS)
 
 /obj/machinery/deepfryer/proc/start_fry(obj/item/frying_item, mob/user)
 	to_chat(user, span_notice("You put [frying_item] into [src]."))
@@ -183,6 +204,7 @@ GLOBAL_LIST_INIT(oilfry_blacklisted_items, typecacheof(list(
 		ADD_TRAIT(frying, TRAIT_FOOD_CHEF_MADE, REF(user.mind))
 	SEND_SIGNAL(frying, COMSIG_ITEM_ENTERED_FRYER)
 
+	flick("fryer_start", src)
 	icon_state = "fryer_on"
 	fry_loop.start()
 
@@ -216,7 +238,7 @@ GLOBAL_LIST_INIT(oilfry_blacklisted_items, typecacheof(list(
 		if(target_temp < TCMB + 10) // a tiny bit of leeway
 			dunking_target.visible_message(span_userdanger("[dunking_target] explodes from the entropic difference! Holy fuck!"))
 			dunking_target.investigate_log("has been gibbed by entropic difference (being dunked into [src]).", INVESTIGATE_DEATHS)
-			dunking_target.gib()
+			dunking_target.gib(DROP_ALL_REMAINS)
 			log_combat(user, dunking_target, "blew up", null, "by dunking them into [src]")
 			return
 
@@ -224,10 +246,14 @@ GLOBAL_LIST_INIT(oilfry_blacklisted_items, typecacheof(list(
 			cold_multiplier += round(target_temp * 1.5 / T0C, 0.01)
 		dunking_target.apply_damage(min(30 * bio_multiplier * cold_multiplier, reagents.total_volume), BURN, BODY_ZONE_HEAD)
 		if(reagents.reagent_list) //This can runtime if reagents has nothing in it.
-			reagents.remove_any((reagents.total_volume/2))
+			reagents.remove_all((reagents.total_volume/2))
 		dunking_target.Paralyze(60)
 		user.changeNext_move(CLICK_CD_MELEE)
 	return ..()
+
+/obj/machinery/deepfryer/proc/on_cleaned(obj/source_component, obj/source)
+	grease_level = 0
+	update_appearance(UPDATE_OVERLAYS)
 
 #undef DEEPFRYER_COOKTIME
 #undef DEEPFRYER_BURNTIME

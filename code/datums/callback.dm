@@ -26,7 +26,7 @@
  * ## PROC TYPEPATH SHORTCUTS
  * (these operate on paths, not types, so to these shortcuts, datum is NOT a parent of atom, etc...)
  *
- * ### proc defined on current(src) object OR overridden at src or any of it's parents:
+ * ### proc defined on current(src) object OR overridden at src or any of its parents:
  * PROC_REF(procname)
  *
  * `CALLBACK(src, PROC_REF(some_proc_here))`
@@ -104,12 +104,6 @@
 	if (!object)
 		return
 
-#if DM_VERSION <= 514
-	if(istext(object) && object != GLOBAL_PROC)
-		to_chat(usr, "[object] may be an external library. Calling external libraries is disallowed.", confidential = TRUE)
-		return
-#endif
-
 	var/list/calling_arguments = arguments
 	if (length(args))
 		if (length(arguments))
@@ -146,12 +140,6 @@
 
 	if (!object)
 		return
-
-#if DM_VERSION <= 514
-	if(istext(object) && object != GLOBAL_PROC)
-		to_chat(usr, "[object] may be an external library. Calling external libraries is disallowed.", confidential = TRUE)
-		return
-#endif
 
 	var/list/calling_arguments = arguments
 	if (length(args))

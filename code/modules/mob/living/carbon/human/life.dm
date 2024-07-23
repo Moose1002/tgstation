@@ -28,7 +28,7 @@
 
 	//Body temperature stability and damage
 	dna.species.handle_body_temperature(src, seconds_per_tick, times_fired)
-	if(!IS_IN_STASIS(src))
+	if(!HAS_TRAIT(src, TRAIT_STASIS))
 		if(stat != DEAD)
 			//handle active mutations
 			for(var/datum/mutation/human/human_mutation as anything in dna.mutations)
@@ -100,7 +100,7 @@
 /// Environment handlers for species
 /mob/living/carbon/human/handle_environment(datum/gas_mixture/environment, seconds_per_tick, times_fired)
 	// If we are in a cryo bed do not process life functions
-	if(istype(loc, /obj/machinery/atmospherics/components/unary/cryo_cell))
+	if(istype(loc, /obj/machinery/cryo_cell))
 		return
 
 	dna.species.handle_environment(src, environment, seconds_per_tick, times_fired)
@@ -207,7 +207,7 @@
 		if(thermal_protection_flags & HAND_RIGHT)
 			thermal_protection += THERMAL_PROTECTION_HAND_RIGHT
 
-	return min(1, thermal_protection)
+	return min(1, round(thermal_protection, 0.001))
 
 //See proc/get_heat_protection_flags(temperature) for the description of this proc.
 /mob/living/carbon/human/proc/get_cold_protection_flags(temperature)
@@ -268,20 +268,7 @@
 		if(thermal_protection_flags & HAND_RIGHT)
 			thermal_protection += THERMAL_PROTECTION_HAND_RIGHT
 
-	return min(1, thermal_protection)
-
-/mob/living/carbon/human/handle_random_events(seconds_per_tick, times_fired)
-	//Puke if toxloss is too high
-	if(stat)
-		return
-	if(getToxLoss() < 45 || nutrition <= 20)
-		return
-
-	lastpuke += SPT_PROB(30, seconds_per_tick)
-	if(lastpuke >= 50) // about 25 second delay I guess // This is actually closer to 150 seconds
-		vomit(VOMIT_CATEGORY_DEFAULT, lost_nutrition = 20)
-		lastpuke = 0
-
+	return min(1, round(thermal_protection, 0.001))
 
 /mob/living/carbon/human/has_smoke_protection()
 	if(isclothing(wear_mask))

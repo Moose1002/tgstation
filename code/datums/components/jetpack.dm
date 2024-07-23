@@ -63,7 +63,7 @@
 	if(trail && trail.effect_type != effect_type)
 		setup_trail(trail.holder)
 
-/datum/component/jetpack/Destroy(force, silent)
+/datum/component/jetpack/Destroy(force)
 	if(trail)
 		QDEL_NULL(trail)
 	check_on_move = null
@@ -84,8 +84,6 @@
 	if(!check_on_move.Invoke(TRUE))
 		return return_flag
 
-	ADD_TRAIT(user, TRAIT_JETPACKING, REF(src))
-
 	RegisterSignal(user, COMSIG_MOVABLE_MOVED, PROC_REF(move_react))
 	RegisterSignal(user, COMSIG_MOVABLE_PRE_MOVE, PROC_REF(pre_move_react))
 	RegisterSignal(user, COMSIG_MOVABLE_SPACEMOVE, PROC_REF(spacemove_react))
@@ -96,8 +94,6 @@
 
 /datum/component/jetpack/proc/deactivate(datum/source, mob/user)
 	SIGNAL_HANDLER
-
-	REMOVE_TRAIT(user, TRAIT_JETPACKING, REF(src))
 
 	UnregisterSignal(user, COMSIG_MOVABLE_MOVED)
 	UnregisterSignal(user, COMSIG_MOVABLE_PRE_MOVE)
@@ -120,7 +116,7 @@
 		return
 	if(user.throwing)//You don't must use jet if you thrown
 		return
-	if(length(user.client.keys_held & user.client.movement_keys))//You use jet when press keys. yes.
+	if(user.client.intended_direction)//You use jet when press keys. yes.
 		thrust()
 
 /datum/component/jetpack/proc/pre_move_react(mob/user)

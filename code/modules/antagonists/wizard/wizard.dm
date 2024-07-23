@@ -14,6 +14,7 @@ GLOBAL_LIST_EMPTY(wizard_spellbook_purchases_by_key)
 	preview_outfit = /datum/outfit/wizard
 	can_assign_self_objectives = TRUE
 	default_custom_objective = "Demonstrate your incredible and destructive magical powers."
+	hardcore_random_bonus = TRUE
 	var/give_objectives = TRUE
 	var/strip = TRUE //strip before equipping
 	var/allow_rename = TRUE
@@ -24,6 +25,8 @@ GLOBAL_LIST_EMPTY(wizard_spellbook_purchases_by_key)
 	show_to_ghosts = TRUE
 	/// This mob's Grand Ritual ability
 	var/datum/action/cooldown/grand_ritual/ritual
+	/// Perks that wizard learn
+	var/list/perks = list()
 
 /datum/antagonist/wizard_minion
 	name = "Wizard Minion"
@@ -256,6 +259,7 @@ GLOBAL_LIST_EMPTY(wizard_spellbook_purchases_by_key)
 	name = "Wizard Apprentice"
 	antag_hud_name = "apprentice"
 	can_assign_self_objectives = FALSE
+	move_to_lair = FALSE
 	var/datum/mind/master
 	var/school = APPRENTICE_DESTRUCTION
 	outfit_type = /datum/outfit/wizard/apprentice

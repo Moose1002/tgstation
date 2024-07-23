@@ -97,7 +97,7 @@
 /obj/effect/mob_spawn/ghost_role/human/lavaland_syndicate/comms/space/Initialize(mapload)
 	. = ..()
 	if(prob(85)) //only has a 15% chance of existing, otherwise it'll just be a NPC syndie.
-		new /mob/living/basic/syndicate/ranged(get_turf(src))
+		new /mob/living/basic/trooper/syndicate/ranged(get_turf(src))
 		return INITIALIZE_HINT_QDEL
 
 ///battlecruiser stuff
@@ -181,6 +181,6 @@
 	ears = /obj/item/radio/headset/syndicate/alt/leader
 	glasses = /obj/item/clothing/glasses/thermal/eyepatch
 	head = /obj/item/clothing/head/hats/hos/cap/syndicate
-	mask = /obj/item/clothing/mask/cigarette/cigar/havana
+	mask = /obj/item/cigarette/cigar/havana
 	l_pocket = /obj/item/melee/energy/sword/saber/red
 	r_pocket = /obj/item/melee/baton/telescopic

@@ -1,3 +1,5 @@
+#define REAGENT_SPILL_DIVISOR 200
+
 /obj/structure/reagent_dispensers
 	name = "Dispenser"
 	desc = "..."
@@ -29,6 +31,8 @@
 	var/mutable_appearance/assembliesoverlay
 	/// The person who attached an assembly to this dispenser, for bomb logging purposes
 	var/last_rigger = ""
+	/// is it climbable? some of our wall-mounted dispensers should not have this
+	var/climbable = FALSE
 
 // This check is necessary for assemblies to automatically detect that we are compatible
 /obj/structure/reagent_dispensers/IsSpecialAssembly()
@@ -51,6 +55,9 @@
 
 	if(icon_state == "water" && check_holidays(APRIL_FOOLS))
 		icon_state = "water_fools"
+	if(climbable)
+		AddElement(/datum/element/climbable, climb_time = 4 SECONDS, climb_stun = 4 SECONDS)
+		AddElement(/datum/element/elevation, pixel_shift = 14)
 
 /obj/structure/reagent_dispensers/examine(mob/user)
 	. = ..()
@@ -176,7 +183,7 @@
 		// It did not account for how much fuel was actually in the tank at all, just the size of the tank.
 		// I encourage others to better scale these numbers in the future.
 		// As it stands this is a minor nerf in exchange for an easy bombing technique working that has been broken for a while.
-		switch(volatiles.volume)
+		switch(fuel_amt)
 			if(25 to 150)
 				explosion(src, light_impact_range = 1, flame_range = 2)
 			if(150 to 300)
@@ -189,29 +196,36 @@
 				explosion(src, devastation_range = 1, heavy_impact_range = 2, light_impact_range = 6, flame_range = 8)
 	qdel(src)
 
-/obj/structure/reagent_dispensers/deconstruct(disassembled = TRUE)
-	if(!(flags_1 & NODECONSTRUCT_1))
-		if(!disassembled)
-			boom()
-	else
-		qdel(src)
+/obj/structure/reagent_dispensers/atom_deconstruct(disassembled = TRUE)
+	if(!disassembled)
+		boom()
 
 /obj/structure/reagent_dispensers/proc/tank_leak()
 	if(leaking && reagents && reagents.total_volume >= amount_to_leak)
 		reagents.expose(get_turf(src), TOUCH, amount_to_leak / max(amount_to_leak, reagents.total_volume))
 		reagents.remove_reagent(reagent_id, amount_to_leak)
+		playsound(src, 'sound/effects/glug.ogg', 33, TRUE, SILENCED_SOUND_EXTRARANGE)
 		return TRUE
 	return FALSE
+
+/obj/structure/reagent_dispensers/proc/knock_down()
+	var/datum/effect_system/fluid_spread/smoke/chem/smoke = new ()
+	var/range = reagents.total_volume / REAGENT_SPILL_DIVISOR
+	smoke.attach(drop_location())
+	smoke.set_up(round(range), holder = drop_location(), location = drop_location(), carry = reagents, silent = FALSE)
+	smoke.start(log = TRUE)
+	reagents.clear_reagents()
+	qdel(src)
 
 /obj/structure/reagent_dispensers/wrench_act(mob/living/user, obj/item/tool)
 	. = ..()
 	if(!openable)
 		return FALSE
 	leaking = !leaking
-	balloon_alert(user, "[leaking ? "opened" : "closed"] [src]'s tap")
+	balloon_alert(user, "[leaking ? "opened" : "closed"] tap")
 	user.log_message("[leaking ? "opened" : "closed"] [src].", LOG_GAME)
 	tank_leak()
-	return TOOL_ACT_TOOLTYPE_SUCCESS
+	return ITEM_INTERACT_SUCCESS
 
 /obj/structure/reagent_dispensers/Moved(atom/old_loc, movement_dir, forced, list/old_locs, momentum_change = TRUE)
 	. = ..()
@@ -222,6 +236,7 @@
 	desc = "A water tank."
 	icon_state = "water"
 	openable = TRUE
+	climbable = TRUE
 
 /obj/structure/reagent_dispensers/watertank/high
 	name = "high-capacity water tank"
@@ -236,6 +251,7 @@
 	reagent_id = /datum/reagent/firefighting_foam
 	tank_volume = 500
 	openable = TRUE
+	climbable = TRUE
 
 /obj/structure/reagent_dispensers/fueltank
 	name = "fuel tank"
@@ -244,6 +260,7 @@
 	reagent_id = /datum/reagent/fuel
 	openable = TRUE
 	accepts_rig = TRUE
+	climbable = TRUE
 
 /obj/structure/reagent_dispensers/fueltank/Initialize(mapload)
 	. = ..()
@@ -322,6 +339,7 @@ MAPPING_DIRECTIONAL_HELPERS(/obj/structure/reagent_dispensers/wall/peppertank, 3
 	. = ..()
 	if(prob(1))
 		desc = "IT'S PEPPER TIME, BITCH!"
+	find_and_hang_on_wall()
 
 /obj/structure/reagent_dispensers/water_cooler
 	name = "liquid cooler"
@@ -373,6 +391,10 @@ MAPPING_DIRECTIONAL_HELPERS(/obj/structure/reagent_dispensers/wall/peppertank, 3
 
 MAPPING_DIRECTIONAL_HELPERS(/obj/structure/reagent_dispensers/wall/virusfood, 30)
 
+/obj/structure/reagent_dispensers/wall/virusfood/Initialize(mapload)
+	. = ..()
+	find_and_hang_on_wall()
+
 /obj/structure/reagent_dispensers/cooking_oil
 	name = "vat of cooking oil"
 	desc = "A huge metal vat with a tap on the front. Filled with cooking oil for use in frying food."
@@ -403,7 +425,7 @@ MAPPING_DIRECTIONAL_HELPERS(/obj/structure/reagent_dispensers/wall/virusfood, 30
 /obj/structure/reagent_dispensers/plumbed/wrench_act(mob/living/user, obj/item/tool)
 	. = ..()
 	default_unfasten_wrench(user, tool)
-	return TOOL_ACT_TOOLTYPE_SUCCESS
+	return ITEM_INTERACT_SUCCESS
 
 /obj/structure/reagent_dispensers/plumbed/storage
 	name = "stationary storage tank"
@@ -414,8 +436,6 @@ MAPPING_DIRECTIONAL_HELPERS(/obj/structure/reagent_dispensers/wall/virusfood, 30
 	. = ..()
 	AddComponent(/datum/component/simple_rotation)
 
-/obj/structure/reagent_dispensers/plumbed/storage/AltClick(mob/user)
-	return ..() // This hotkey is BLACKLISTED since it's used by /datum/component/simple_rotation
 
 /obj/structure/reagent_dispensers/plumbed/storage/update_overlays()
 	. = ..()
@@ -435,3 +455,5 @@ MAPPING_DIRECTIONAL_HELPERS(/obj/structure/reagent_dispensers/wall/virusfood, 30
 	desc = "A stationary, plumbed, fuel tank."
 	reagent_id = /datum/reagent/fuel
 	accepts_rig = TRUE
+
+#undef REAGENT_SPILL_DIVISOR

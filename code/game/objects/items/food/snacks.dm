@@ -4,7 +4,7 @@
 
 /obj/item/food/candy
 	name = "candy"
-	desc = "Nougat love it or hate it."
+	desc = "It's nougat, love it or hate it."
 	icon_state = "candy"
 	trash_type = /obj/item/trash/candy
 	food_reagents = list(
@@ -157,7 +157,7 @@
 
 /obj/item/food/candy_trash
 	name = "candy cigarette butt"
-	icon = 'icons/obj/clothing/masks.dmi'
+	icon = 'icons/obj/cigarettes.dmi'
 	icon_state = "candybum"
 	desc = "The leftover from a smoked-out candy cigarette. Can be eaten!"
 	food_reagents = list(

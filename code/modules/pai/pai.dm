@@ -16,7 +16,7 @@
 	light_flags = LIGHT_ATTACHED
 	light_on = FALSE
 	light_range = 3
-	light_system = MOVABLE_LIGHT
+	light_system = OVERLAY_LIGHT
 	maxHealth = 500
 	mob_size = MOB_SIZE_TINY
 	mobility_flags = MOBILITY_FLAGS_REST_CAPABLE_DEFAULT
@@ -31,7 +31,7 @@
 
 	/// If someone has enabled/disabled the pAIs ability to holo
 	var/can_holo = TRUE
-	/// Whether this pAI can recieve radio messages
+	/// Whether this pAI can receive radio messages
 	var/can_receive = TRUE
 	/// Whether this pAI can transmit radio messages
 	var/can_transmit = TRUE
@@ -71,8 +71,6 @@
 	// Onboard Items
 	/// Atmospheric analyzer
 	var/obj/item/analyzer/atmos_analyzer
-	/// Health analyzer
-	var/obj/item/healthanalyzer/host_scan
 	/// GPS
 	var/obj/item/gps/pai/internal_gps
 	/// Music Synthesizer
@@ -81,6 +79,9 @@
 	var/obj/machinery/newscaster/pai/newscaster
 	/// Remote signaler
 	var/obj/item/assembly/signaler/internal/signaler
+
+	///The messeenger ability that pAIs get when they are put in a PDA.
+	var/datum/action/innate/pai/messenger/messenger_ability
 
 	// Static lists
 	/// List of all available downloads
@@ -111,12 +112,16 @@
 		"crow" = TRUE,
 		"duffel" = TRUE,
 		"fox" = FALSE,
+		"frog" = TRUE,
 		"hawk" = FALSE,
 		"lizard" = FALSE,
 		"monkey" = TRUE,
 		"mouse" = TRUE,
 		"rabbit" = TRUE,
 		"repairbot" = TRUE,
+		"kitten" = TRUE,
+		"puppy" = TRUE,
+		"spider" = TRUE,
 	)
 	/// List of all available card overlays.
 	var/static/list/possible_overlays = list(
@@ -144,22 +149,21 @@
 	return ..()
 
 // See software.dm for Topic()
-/mob/living/silicon/pai/can_perform_action(atom/movable/target, action_bitflags)
+/mob/living/silicon/pai/can_perform_action(atom/target, action_bitflags)
 	action_bitflags |= ALLOW_RESTING // Resting is just an aesthetic feature for them
 	action_bitflags &= ~ALLOW_SILICON_REACH // They don't get long reach like the rest of silicons
 	return ..(target, action_bitflags)
 
 /mob/living/silicon/pai/Destroy()
+	QDEL_NULL(messenger_ability)
 	QDEL_NULL(atmos_analyzer)
 	QDEL_NULL(hacking_cable)
-	QDEL_NULL(host_scan)
 	QDEL_NULL(instrument)
 	QDEL_NULL(internal_gps)
 	QDEL_NULL(newscaster)
 	QDEL_NULL(signaler)
 	QDEL_NULL(leash)
 	card = null
-	GLOB.pai_list.Remove(src)
 	return ..()
 
 // Need to override parent here because the message we dispatch is turf-based, not based on the location of the object because that could be fuckin anywhere
@@ -192,8 +196,6 @@
 		atmos_analyzer = null
 	else if(gone == aicamera)
 		aicamera = null
-	else if(gone == host_scan)
-		host_scan = null
 	else if(gone == internal_gps)
 		internal_gps = null
 	else if(gone == instrument)
@@ -215,8 +217,9 @@
 
 /mob/living/silicon/pai/Initialize(mapload)
 	. = ..()
+	if(istype(loc, /obj/item/modular_computer))
+		give_messenger_ability()
 	START_PROCESSING(SSfastprocess, src)
-	GLOB.pai_list += src
 	make_laws()
 	for(var/law in laws.inherent)
 		lawcheck += law
@@ -234,6 +237,9 @@
 	update_appearance(UPDATE_DESC)
 
 	RegisterSignal(src, COMSIG_LIVING_CULT_SACRIFICED, PROC_REF(on_cult_sacrificed))
+	RegisterSignals(src, list(COMSIG_LIVING_ADJUST_BRUTE_DAMAGE, COMSIG_LIVING_ADJUST_BURN_DAMAGE), PROC_REF(on_shell_damaged))
+	RegisterSignal(src, COMSIG_LIVING_ADJUST_STAMINA_DAMAGE, PROC_REF(on_shell_weakened))
+	RegisterSignal(src, COMSIG_HIT_BY_SABOTEUR, PROC_REF(on_saboteur))
 
 /mob/living/silicon/pai/make_laws()
 	laws = new /datum/ai_laws/pai()
@@ -268,6 +274,15 @@
 	icon_state = resting ? "[chassis]_rest" : "[chassis]"
 	held_state = "[chassis]"
 	return ..()
+
+/mob/living/silicon/pai/set_stat(new_stat)
+	. = ..()
+	update_stat()
+
+/mob/living/silicon/pai/on_knockedout_trait_loss(datum/source)
+	. = ..()
+	set_stat(CONSCIOUS)
+	update_stat()
 
 /**
  * Resolves the weakref of the pai's master.
@@ -337,6 +352,12 @@
 	to_chat(src, span_danger("ALERT: Foreign software detected."))
 	to_chat(src, span_danger("WARN: Holochasis range restrictions disabled."))
 	return TRUE
+
+/mob/living/silicon/pai/proc/on_saboteur(datum/source, disrupt_duration)
+	SIGNAL_HANDLER
+	set_silence_if_lower(disrupt_duration)
+	balloon_alert(src, "muted!")
+	return COMSIG_SABOTEUR_SUCCESS
 
 /**
  * Resets the pAI and any emagged status.
@@ -437,7 +458,7 @@
 	to_chat(src, span_userdanger("Your mental faculties leave you."))
 	to_chat(src, span_rose("oblivion... "))
 	balloon_alert(user, "personality wiped")
-	playsound(src, "sound/machines/buzz-two.ogg", 30, TRUE)
+	playsound(src, 'sound/machines/buzz-two.ogg', 30, TRUE)
 	qdel(src)
 	return TRUE
 
@@ -446,8 +467,8 @@
 	SIGNAL_HANDLER
 
 	for(var/mob/living/cultist as anything in invokers)
-		to_chat(cultist, span_cultitalic("You don't think this is what Nar'Sie had in mind when She asked for blood sacrifices..."))
-	return STOP_SACRIFICE
+		to_chat(cultist, span_cult_italic("You don't think this is what Nar'Sie had in mind when She asked for blood sacrifices..."))
+	return STOP_SACRIFICE|SILENCE_SACRIFICE_MESSAGE
 
 /// Updates the distance we can be from our pai card
 /mob/living/silicon/pai/proc/increment_range(increment_amount)
@@ -458,3 +479,14 @@
 	if (new_distance < HOLOFORM_MIN_RANGE || new_distance > HOLOFORM_MAX_RANGE)
 		return
 	leash.set_distance(new_distance)
+
+///Gives the messenger ability to the pAI, creating a new one if it doesn't have one already.
+/mob/living/silicon/pai/proc/give_messenger_ability()
+	if(!messenger_ability)
+		messenger_ability = new(src)
+	messenger_ability.Grant(src)
+
+///Removes the messenger ability from the pAI, but does not delete it.
+/mob/living/silicon/pai/proc/remove_messenger_ability()
+	if(messenger_ability)
+		messenger_ability.Remove(src)

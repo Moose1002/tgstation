@@ -61,7 +61,7 @@
 	body_parts_covered = CHEST|GROIN|ARMS
 	allowed = list(
 		/obj/item/assembly/flash/handheld,
-		/obj/item/clothing/mask/cigarette,
+		/obj/item/cigarette,
 		/obj/item/disk,
 		/obj/item/lighter,
 		/obj/item/melee,
@@ -144,6 +144,12 @@
 	icon_state = "detsuit"
 	inhand_icon_state = null
 
+/obj/item/clothing/suit/jacket/det_suit/brown
+	name = "brown suit jacket"
+	desc = "A suit jacket perfect for dinner dates and criminal investigations."
+	icon_state = "detsuit_brown"
+	inhand_icon_state = null
+
 /obj/item/clothing/suit/jacket/det_suit/kim
 	name = "aerostatic bomber jacket"
 	desc = "A jacket once worn by the revolutionary air brigades during the Antecentennial Revolution. There are quite a few pockets on the inside, mostly for storing notebooks and compasses."
@@ -173,7 +179,9 @@
 		/obj/item/tank/internals/emergency_oxygen,
 		/obj/item/tank/internals/plasmaman,
 		/obj/item/t_scanner,
-		/obj/item/gun/ballistic/rifle/boltaction/pipegun/prime,
+		/obj/item/gun/ballistic/rifle/boltaction/pipegun,
+		/obj/item/storage/bag/rebar_quiver,
+		/obj/item/gun/ballistic/rifle/rebarxbow,
 	)
 	resistance_flags = NONE
 	species_exception = list(/datum/species/golem)
@@ -225,15 +233,19 @@
 // Quartermaster
 
 /obj/item/clothing/suit/jacket/quartermaster
-	name = "quatermaster's overcoat"
-	desc = "A luxury, brown double-breasted overcoat, made from kangaroo skin. It's gold cuffs linked are styled on the credits symbol. It makes you feel more important then you probably are."
+	name = "quartermaster's overcoat"
+	desc = "A luxury, brown double-breasted overcoat made from kangaroo skin. Its gold cuffs are linked and styled on the credits symbol. It makes you feel more important than you probably are."
 	icon_state = "qm_coat"
 	blood_overlay_type = "coat"
 	body_parts_covered = CHEST|GROIN|LEGS|ARMS
-	allowed = list(
+
+/obj/item/clothing/suit/jacket/quartermaster/Initialize(mapload)
+	. = ..()
+	allowed += list(
 		/obj/item/stamp,
 		/obj/item/storage/bag/mail,
 		/obj/item/universal_scanner,
+		/obj/item/melee/baton/telescopic,
 	)
 
 /obj/item/clothing/suit/toggle/lawyer/greyscale
@@ -373,24 +385,6 @@
 	body_parts_covered = HEAD
 	flags_inv = HIDEHAIR|HIDEEARS
 
-// Research Director
-
-/obj/item/clothing/suit/jacket/research_director
-	name = "research director's coat"
-	desc = "A mix between a labcoat and just a regular coat. It's made out of a special anti-bacterial, anti-acidic, and anti-biohazardous synthetic fabric."
-	icon_state = "labcoat_rd"
-	armor_type = /datum/armor/jacket_research_director
-	body_parts_covered = CHEST|GROIN|ARMS
-
-/datum/armor/jacket_research_director
-	bio = 75
-	fire = 75
-	acid = 75
-
-/obj/item/clothing/suit/jacket/research_director/Initialize(mapload)
-	. = ..()
-	allowed += /obj/item/storage/bag/xeno
-
 // Atmos
 /obj/item/clothing/suit/atmos_overalls
 	name = "atmospherics overalls"
@@ -412,6 +406,10 @@
 		/obj/item/t_scanner,
 		/obj/item/tank/internals/emergency_oxygen,
 		/obj/item/tank/internals/plasmaman,
+		/obj/item/extinguisher,
+		/obj/item/construction/rtd,
+		/obj/item/gun/ballistic/rifle/rebarxbow,
+		/obj/item/storage/bag/rebar_quiver,
 	)
 
 /datum/armor/atmos_overalls

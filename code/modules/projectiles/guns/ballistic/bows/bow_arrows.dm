@@ -11,7 +11,6 @@
 	throwforce = 1
 	firing_effect_type = null
 	caliber = CALIBER_ARROW
-	is_cased_ammo = FALSE
 	///Whether the bullet type spawns another casing of the same type or not.
 	var/reusable = TRUE
 
@@ -33,17 +32,18 @@
 	damage = 50
 	speed = 1
 	range = 25
-	embedding = list(
-		embed_chance = 90,
-		fall_chance = 2,
-		jostle_chance = 2,
-		ignore_throwspeed_threshold = TRUE,
-		pain_stam_pct = 0.5,
-		pain_mult = 3,
-		jostle_pain_mult = 3,
-		rip_time = 1 SECONDS
-	)
-	shrapnel_type = /obj/item/ammo_casing/arrow
+	shrapnel_type = null
+	embed_type = /datum/embed_data/arrow
+
+/datum/embed_data/arrow
+	embed_chance = 90
+	fall_chance = 2
+	jostle_chance = 2
+	ignore_throwspeed_threshold = TRUE
+	pain_stam_pct = 0.5
+	pain_mult = 3
+	jostle_pain_mult = 3
+	rip_time = 1 SECONDS
 
 /// holy arrows
 /obj/item/ammo_casing/arrow/holy
@@ -59,22 +59,33 @@
 	name = "holy arrow"
 	desc = "Here it comes, cultist scum!"
 	icon_state = "holy_arrow_projectile"
-	damage = 20 //still a lot but this is roundstart gear so far less
-	shrapnel_type =/obj/item/ammo_casing/arrow/holy
-	embedding = list(
-		embed_chance = 50,
-		fall_chance = 2,
-		jostle_chance = 0,
-		ignore_throwspeed_threshold = TRUE,
-		pain_stam_pct = 0.5,
-		pain_mult = 3,
-		rip_time = 1 SECONDS
-	)
 
 /obj/projectile/bullet/arrow/holy/Initialize(mapload)
 	. = ..()
 	//50 damage to revenants
-	AddElement(/datum/element/bane, target_type = /mob/living/simple_animal/revenant, damage_multiplier = 0, added_damage = 30)
+	AddElement(/datum/element/bane, target_type = /mob/living/basic/revenant, damage_multiplier = 0, added_damage = 30)
+
+/// plastic arrows
+// completely dogshit quality and they break when they hit something.
+/obj/item/ammo_casing/arrow/plastic
+	name = "plastic arrow"
+	desc = "The earliest mining teams within the Spinward Sector were the somewhat stout ancestors of the modern settlers. These teams \
+		found themselves often unable to access the quality materials they were digging up for equipment maintenance, all being sent off-site. \
+		Left with few options, and in need of a way to protect themselves in the hostile work enviroments of the Spinward, they turned \
+		to the one material they had in abundance."
+	icon_state = "plastic_arrow"
+	base_icon_state = "plastic_arrow"
+	projectile_type = /obj/projectile/bullet/arrow/plastic
+	reusable = FALSE //cheap shit
+
+/// plastic arrow projectile
+/obj/projectile/bullet/arrow/plastic
+	name = "plastic arrow"
+	desc = "If this is about to kill you, you should feel genuine shame."
+	damage = 5
+	stamina = 50
+	weak_against_armour = TRUE
+	icon_state = "plastic_arrow_projectile"
 
 /// special pyre sect arrow
 /// in the future, this needs a special sprite, but bows don't support non-hardcoded arrow sprites
@@ -89,7 +100,7 @@
 	desc = "THE UNMATCHED POWER OF THE SUN"
 	icon_state = "holy_arrow_projectile"
 	damage = 20
-	embedding = null
+	embed_type = null
 
 /obj/projectile/bullet/arrow/blazing/on_hit(atom/target, blocked, pierce_hit)
 	. = ..()
@@ -101,5 +112,5 @@
 		human_target.adjust_fire_stacks(2)
 		human_target.ignite_mob()
 		return
-	to_chat(human_target, span_danger("[src] reacts with the flames on y-"))
+	to_chat(human_target, span_danger("[src] reacts with the flames enveloping you! Oh shit!"))
 	explosion(src, light_impact_range = 1, flame_range = 2) //ow
